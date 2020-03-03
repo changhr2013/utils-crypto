@@ -349,8 +349,7 @@ public abstract class SM2Util {
 
         switch (type) {
             // infinity
-            case 0x00:
-            {
+            case 0x00: {
                 p = x9ECParameters.getCurve().getInfinity();
                 c1 = new byte[1];
                 System.arraycopy(data, 0, c1, 0, c1.length);
@@ -358,22 +357,19 @@ public abstract class SM2Util {
             }
             // compressed
             case 0x02:
-            case 0x03:
-            {
+            case 0x03: {
                 c1 = new byte[expectedLength + 1];
                 System.arraycopy(data, 0, c1, 0, c1.length);
                 p = x9ECParameters.getCurve().decodePoint(c1);
                 break;
             }
             // uncompressed
-            case 0x04:
-            {
+            case 0x04: {
                 return data;
             }
             // hybrid
             case 0x06:
-            case 0x07:
-            {
+            case 0x07: {
                 c1 = new byte[2 * expectedLength + 1];
                 System.arraycopy(data, 0, c1, 0, c1.length);
                 p = x9ECParameters.getCurve().decodePoint(c1);

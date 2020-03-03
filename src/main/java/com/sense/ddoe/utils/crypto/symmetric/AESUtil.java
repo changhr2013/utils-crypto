@@ -5,7 +5,6 @@ import org.bouncycastle.util.encoders.Hex;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -90,11 +89,33 @@ public abstract class AESUtil {
             Cipher cipher = Cipher.getInstance(cipherAlgorithm);
             // 初始化，设置为解密模式
             cipher.init(Cipher.DECRYPT_MODE, k);
+
+            // 发现使用 NoPadding 时，使用 ZeroPadding 填充
+            if (ECB_NO_PADDING.equals(cipherAlgorithm)) {
+                return removeZeroPadding(cipher.doFinal(data), cipher.getBlockSize());
+            }
+
             // 执行操作
             return cipher.doFinal(data);
         } catch (Exception e) {
             throw new RuntimeException("AES decrypt error", e);
         }
+    }
+
+    private static byte[] removeZeroPadding (byte[] data, final int blockSize) {
+        final int length = data.length;
+        final int remainLength = length % blockSize;
+        if (remainLength == 0) {
+            // 解码后的数据正好是块大小的整数倍，说明可能存在补 0 的情况，去掉末尾所有的 0
+            int i = length - 1;
+            while (i >= 0 && 0 == data[i]) {
+                i--;
+            }
+            byte[] outputData = new byte[i + 1];
+            System.arraycopy(data, 0, outputData, 0, outputData.length);
+            return outputData;
+        }
+        return data;
     }
 
     /**
@@ -151,7 +172,7 @@ public abstract class AESUtil {
 
             GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(128, nonce);
 
-            // 初始化，设置为加密模式
+            // 初始化，设置为解密模式
             cipher.init(Cipher.DECRYPT_MODE, k, gcmParameterSpec);
 
             if (aad != null) {
@@ -238,11 +259,29 @@ public abstract class AESUtil {
             Cipher cipher = Cipher.getInstance(cipherAlgorithm);
             // 初始化，设置为加密模式
             cipher.init(Cipher.ENCRYPT_MODE, k);
+
+            // 发现使用 NoPadding 时，使用 ZeroPadding 填充
+            if (ECB_NO_PADDING.equals(cipherAlgorithm)) {
+                return cipher.doFinal(formatWithZeroPadding(data, cipher.getBlockSize()));
+            }
+
             // 执行操作
             return cipher.doFinal(data);
         } catch (Exception e) {
             throw new RuntimeException("AES encrypt error", e);
         }
+    }
+
+    private static byte[] formatWithZeroPadding(byte[] data, final int blockSize) {
+        final int length = data.length;
+        final int remainLength = length % blockSize;
+
+        if (remainLength > 0) {
+            byte[] inputData = new byte[length + blockSize - remainLength];
+            System.arraycopy(data, 0, inputData, 0, length);
+            return inputData;
+        }
+        return data;
     }
 
     /**
@@ -308,11 +347,25 @@ public abstract class AESUtil {
         byte[] nonce = AESUtil.generateGCMNonce();
         byte[] aad = "aadKey".getBytes(StandardCharsets.UTF_8);
 
+        // AES-GCM
         byte[] encrypt = AESUtil.encryptByGCM(data, key, nonce);
-
         System.out.println(Hex.toHexString(encrypt));
 
-        byte[] bytes = AESUtil.decryptByGCM(encrypt, key, nonce);
-        System.out.println(new String(bytes, StandardCharsets.UTF_8));
+        byte[] decrypt = AESUtil.decryptByGCM(encrypt, key, nonce);
+        System.out.println(new String(decrypt, StandardCharsets.UTF_8));
+
+        // AES-ECB-PKCS5
+        byte[] encrypt1 = AESUtil.encrypt(data, key);
+        System.out.println(Hex.toHexString(encrypt1));
+
+        byte[] decrypt1 = AESUtil.decrypt(encrypt1, key);
+        System.out.println(new String(decrypt1, StandardCharsets.UTF_8));
+
+        // AES-ECB-NoPadding
+        byte[] encrypt2 = AESUtil.encrypt(data, key, AESUtil.ECB_NO_PADDING);
+        System.out.println(Hex.toHexString(encrypt2));
+
+        byte[] decrypt2 = AESUtil.decrypt(encrypt2, key, AESUtil.ECB_NO_PADDING);
+        System.out.println(new String(decrypt2, StandardCharsets.UTF_8));
     }
 }
