@@ -1,4 +1,4 @@
-package com.sense.ddoe.utils.crypto.hash.sm3;
+package com.changhr.utils.crypto.hash.sm3;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.jcajce.provider.config.ConfigurableProvider;

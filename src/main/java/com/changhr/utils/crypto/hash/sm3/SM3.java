@@ -1,4 +1,4 @@
-package com.sense.ddoe.utils.crypto.hash.sm3;
+package com.changhr.utils.crypto.hash.sm3;
 
 import org.bouncycastle.asn1.gm.GMObjectIdentifiers;
 import org.bouncycastle.crypto.CipherKeyGenerator;

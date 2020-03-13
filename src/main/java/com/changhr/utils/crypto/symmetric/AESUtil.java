@@ -1,4 +1,4 @@
-package com.sense.ddoe.utils.crypto.symmetric;
+package com.changhr.utils.crypto.symmetric;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;

@@ -1,6 +1,6 @@
-package com.sense.ddoe.utils.crypto.hash;
+package com.changhr.utils.crypto.hash;
 
-import com.sense.ddoe.utils.crypto.hash.sm3.SM3;
+import com.changhr.utils.crypto.hash.sm3.SM3;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
 

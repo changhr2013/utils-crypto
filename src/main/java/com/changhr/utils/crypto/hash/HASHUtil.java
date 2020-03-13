@@ -1,4 +1,4 @@
-package com.sense.ddoe.utils.crypto.hash;
+package com.changhr.utils.crypto.hash;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;

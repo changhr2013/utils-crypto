@@ -1,4 +1,4 @@
-package com.sense.ddoe.utils.crypto.asymmetric;
+package com.changhr.utils.crypto.asymmetric;
 
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.gm.GMNamedCurves;
