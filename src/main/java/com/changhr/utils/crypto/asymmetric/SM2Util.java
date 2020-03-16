@@ -102,7 +102,7 @@ public abstract class SM2Util {
      * @return r||s，直接拼接 byte 数组的 rs
      */
     public static byte[] sign(byte[] msg, byte[] userId, byte[] swapPrivateKey) {
-        return rsAsn1ToPlainByteArray(signAsn1Rs(msg, userId, swapPrivateKey));
+        return rsAsn1ToPlainByteArray(signWithAsn1(msg, userId, swapPrivateKey));
     }
 
     /**
@@ -112,8 +112,8 @@ public abstract class SM2Util {
      * @param swapPrivateKey SM2 交换私钥
      * @return rs in <b>asn1 format</b>
      */
-    public static byte[] signAsn1Rs(byte[] msg, byte[] swapPrivateKey) {
-        return signAsn1Rs(msg, USER_ID, swapPrivateKey);
+    public static byte[] signWithAsn1(byte[] msg, byte[] swapPrivateKey) {
+        return signWithAsn1(msg, USER_ID, swapPrivateKey);
     }
 
     /**
@@ -124,7 +124,7 @@ public abstract class SM2Util {
      * @param swapPrivateKey SM2 交换私钥
      * @return rs in <b>asn1 format</b>
      */
-    public static byte[] signAsn1Rs(byte[] msg, byte[] userId, byte[] swapPrivateKey) {
+    public static byte[] signWithAsn1(byte[] msg, byte[] userId, byte[] swapPrivateKey) {
         BCECPrivateKey bcecPrivateKey = buildPrivateKey(swapPrivateKey);
         SM2ParameterSpec parameterSpec = new SM2ParameterSpec(userId);
         try {
@@ -148,7 +148,7 @@ public abstract class SM2Util {
      * @return boolean
      */
     public static boolean verify(byte[] msg, byte[] userId, byte[] swapPublicKey, byte[] rs) {
-        return verifyAsn1Rs(msg, userId, swapPublicKey, rsPlainByteArrayToAsn1(rs));
+        return verifyWithAsn1(msg, userId, swapPublicKey, rsPlainByteArrayToAsn1(rs));
     }
 
     /**
@@ -172,7 +172,7 @@ public abstract class SM2Util {
      * @param rs            in <b>asn1 format<b/>
      * @return boolean
      */
-    public static boolean verifyAsn1Rs(byte[] msg, byte[] userId, byte[] swapPublicKey, byte[] rs) {
+    public static boolean verifyWithAsn1(byte[] msg, byte[] userId, byte[] swapPublicKey, byte[] rs) {
         BCECPublicKey bcecPublicKey = buildPublicKey(swapPublicKey);
         SM2ParameterSpec parameterSpec = new SM2ParameterSpec(userId);
         try {
@@ -194,8 +194,8 @@ public abstract class SM2Util {
      * @param rs            in <b>asn1 format<b/>
      * @return boolean
      */
-    public static boolean verifyAsn1Rs(byte[] msg, byte[] swapPublicKey, byte[] rs) {
-        return verifyAsn1Rs(msg, USER_ID, swapPublicKey, rs);
+    public static boolean verifyWithAsn1(byte[] msg, byte[] swapPublicKey, byte[] rs) {
+        return verifyWithAsn1(msg, USER_ID, swapPublicKey, rs);
     }
 
     /**

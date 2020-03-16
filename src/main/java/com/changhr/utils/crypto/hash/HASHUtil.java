@@ -37,21 +37,21 @@ public abstract class HASHUtil {
      * @param data  待做摘要处理的数据
      * @return  byte[] 消息摘要
      */
-    public static byte[] encodeMD5(byte[] data) {
-        return encodeHash(data, HASH_MD5);
+    public static byte[] MD5(byte[] data) {
+        return hash(data, HASH_MD5);
     }
 
-    public static byte[] encodeMD5(String text) {
+    public static byte[] MD5(String text) {
         byte[] data = text.getBytes(StandardCharsets.UTF_8);
-        return encodeMD5(data);
+        return MD5(data);
     }
 
-    public static String encodeMD5Hex(byte[] data) {
-        return Hex.toHexString(encodeMD5(data));
+    public static String MD5Hex(byte[] data) {
+        return Hex.toHexString(MD5(data));
     }
 
-    public static String encodeMD5Hex(String text) {
-        return Hex.toHexString(encodeMD5(text));
+    public static String MD5Hex(String text) {
+        return Hex.toHexString(MD5(text));
     }
 
     /**
@@ -59,21 +59,21 @@ public abstract class HASHUtil {
      * @param data  待做摘要处理的数据
      * @return  byte[] 消息摘要
      */
-    public static byte[] encodeSHA1(byte[] data) {
-        return encodeHash(data, HASH_SHA1);
+    public static byte[] SHA1(byte[] data) {
+        return hash(data, HASH_SHA1);
     }
 
-    public static byte[] encodeSHA1(String text) {
+    public static byte[] SHA1(String text) {
         byte[] data = text.getBytes(StandardCharsets.UTF_8);
-        return encodeSHA1(data);
+        return SHA1(data);
     }
 
-    public static String encodeSHA1Hex(byte[] data) {
-        return Hex.toHexString(encodeSHA1(data));
+    public static String SHA1Hex(byte[] data) {
+        return Hex.toHexString(SHA1(data));
     }
 
-    public static String encodeSHA1Hex(String text) {
-        return Hex.toHexString(encodeSHA1(text));
+    public static String SHA1Hex(String text) {
+        return Hex.toHexString(SHA1(text));
     }
 
     /**
@@ -81,21 +81,21 @@ public abstract class HASHUtil {
      * @param data  待做摘要处理的数据
      * @return  byte[] 消息摘要
      */
-    public static byte[] encodeSHA256(byte[] data) {
-        return encodeHash(data, HASH_SHA256);
+    public static byte[] SHA256(byte[] data) {
+        return hash(data, HASH_SHA256);
     }
 
-    public static byte[] encodeSHA256(String text) {
+    public static byte[] SHA256(String text) {
         byte[] data = text.getBytes(StandardCharsets.UTF_8);
-        return encodeSHA256(data);
+        return SHA256(data);
     }
 
-    public static String encodeSHA256Hex(byte[] data) {
-        return Hex.toHexString(encodeSHA256(data));
+    public static String SHA256Hex(byte[] data) {
+        return Hex.toHexString(SHA256(data));
     }
 
-    public static String encodeSHA256Hex(String text) {
-        return Hex.toHexString(encodeSHA256(text));
+    public static String SHA256Hex(String text) {
+        return Hex.toHexString(SHA256(text));
     }
 
     /**
@@ -104,21 +104,21 @@ public abstract class HASHUtil {
      * @param data 待 hash 的数据
      * @return byte[] SM3 hash 值
      */
-    public static byte[] encodeSM3(byte[] data) {
-        return encodeHash(data, HASH_SM3, BouncyCastleProvider.PROVIDER_NAME);
+    public static byte[] SM3(byte[] data) {
+        return hash(data, HASH_SM3, BouncyCastleProvider.PROVIDER_NAME);
     }
 
-    public static byte[] encodeSM3(String text) {
+    public static byte[] SM3(String text) {
         byte[] data = text.getBytes(StandardCharsets.UTF_8);
-        return encodeSM3(data);
+        return SM3(data);
     }
 
-    public static String encodeSM3Hex(byte[] data) {
-        return Hex.toHexString(encodeSM3(data));
+    public static String SM3Hex(byte[] data) {
+        return Hex.toHexString(SM3(data));
     }
 
-    public static String encodeSM3Hex(String text) {
-        return Hex.toHexString(encodeSM3(text));
+    public static String SM3Hex(String text) {
+        return Hex.toHexString(SM3(text));
     }
 
     /**
@@ -127,7 +127,7 @@ public abstract class HASHUtil {
      * @param hashAlgorithm 摘要的算法类型
      * @return  byte[] 消息摘要
      */
-    private static byte[] encodeHash(byte[] data, final String hashAlgorithm) {
+    private static byte[] hash(byte[] data, final String hashAlgorithm) {
         // 初始化 MessageDigest
         MessageDigest digest;
         try {
@@ -146,7 +146,7 @@ public abstract class HASHUtil {
      * @param provider      jce 的提供者
      * @return  byte[] 消息摘要
      */
-    private static byte[] encodeHash(byte[] data, final String hashAlgorithm, String provider) {
+    private static byte[] hash(byte[] data, final String hashAlgorithm, String provider) {
         // 初始化 MessageDigest
         MessageDigest digest;
         try {

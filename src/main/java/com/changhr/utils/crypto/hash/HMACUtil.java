@@ -73,44 +73,44 @@ public abstract class HMACUtil {
      * @param key  密钥
      * @return byte[] 消息摘要
      */
-    public static byte[] encodeHmacMD5(byte[] data, byte[] key) {
-        return encodeHmac(data, key, HMAC_MD5);
+    public static byte[] MD5(byte[] data, byte[] key) {
+        return hmac(data, key, HMAC_MD5);
     }
 
-    public static String encodeHmacMD5ToBase64(byte[] data, byte[] key) {
-        return Base64.getEncoder().encodeToString(encodeHmacMD5(data, key));
+    public static String MD5ToBase64(byte[] data, byte[] key) {
+        return Base64.getEncoder().encodeToString(MD5(data, key));
     }
 
-    public static String encodeHmacMD5ToHex(byte[] data, byte[] key) {
-        return Hex.toHexString(encodeHmacMD5(data, key));
+    public static String MD5ToHex(byte[] data, byte[] key) {
+        return Hex.toHexString(MD5(data, key));
     }
 
-    public static byte[] encodeHmacMD5WithHexKey(String text, String hexKey) {
+    public static byte[] MD5WithHexKey(String text, String hexKey) {
         byte[] data = text.getBytes(StandardCharsets.UTF_8);
         byte[] key = Hex.decode(hexKey);
-        return encodeHmacMD5(data, key);
+        return MD5(data, key);
     }
 
-    public static String encodeHmacMD5WithHexKeyToBase64(String text, String hexKey) {
-        return Base64.getEncoder().encodeToString(encodeHmacMD5WithHexKey(text, hexKey));
+    public static String MD5WithHexKeyToBase64(String text, String hexKey) {
+        return Base64.getEncoder().encodeToString(MD5WithHexKey(text, hexKey));
     }
 
-    public static String encodeHmacMD5WithHexKeyToHex(String text, String hexKey) {
-        return Hex.toHexString(encodeHmacMD5WithHexKey(text, hexKey));
+    public static String MD5WithHexKeyToHex(String text, String hexKey) {
+        return Hex.toHexString(MD5WithHexKey(text, hexKey));
     }
 
-    public static byte[] encodeHmacMD5WithBase64Key(String text, String base64Key) {
+    public static byte[] MD5WithBase64Key(String text, String base64Key) {
         byte[] data = text.getBytes(StandardCharsets.UTF_8);
         byte[] key = Base64.getDecoder().decode(base64Key);
-        return encodeHmacMD5(data, key);
+        return MD5(data, key);
     }
 
-    public static String encodeHmacMD5WithBase64KeyToBase64(String text, String base64Key) {
-        return Base64.getEncoder().encodeToString(encodeHmacMD5WithBase64Key(text, base64Key));
+    public static String MD5WithBase64KeyToBase64(String text, String base64Key) {
+        return Base64.getEncoder().encodeToString(MD5WithBase64Key(text, base64Key));
     }
 
-    public static String encodeHmacMD5WithBase64KeyToHex(String text, String base64Key) {
-        return Hex.toHexString(encodeHmacMD5WithBase64Key(text, base64Key));
+    public static String MD5WithBase64KeyToHex(String text, String base64Key) {
+        return Hex.toHexString(MD5WithBase64Key(text, base64Key));
     }
 
     /**
@@ -147,44 +147,44 @@ public abstract class HMACUtil {
      * @param key  密钥
      * @return byte[] 消息摘要
      */
-    public static byte[] encodeHmacSHA256(byte[] data, byte[] key) {
-        return encodeHmac(data, key, HMAC_SHA256);
+    public static byte[] SHA256(byte[] data, byte[] key) {
+        return hmac(data, key, HMAC_SHA256);
     }
 
-    public static String encodeHmacSHA256ToBase64(byte[] data, byte[] key) {
-        return Base64.getEncoder().encodeToString(encodeHmacSHA256(data, key));
+    public static String SHA256ToBase64(byte[] data, byte[] key) {
+        return Base64.getEncoder().encodeToString(SHA256(data, key));
     }
 
-    public static String encodeHmacSHA256ToHex(byte[] data, byte[] key) {
-        return Hex.toHexString(encodeHmacSHA256(data, key));
+    public static String SHA256ToHex(byte[] data, byte[] key) {
+        return Hex.toHexString(SHA256(data, key));
     }
 
-    public static byte[] encodeHmacSHA256WithHexKey(String text, String hexKey) {
+    public static byte[] SHA256WithHexKey(String text, String hexKey) {
         byte[] data = text.getBytes(StandardCharsets.UTF_8);
         byte[] key = Hex.decode(hexKey);
-        return encodeHmacSHA256(data, key);
+        return SHA256(data, key);
     }
 
-    public static String encodeHmacSHA256WithHexKeyToBase64(String text, String hexKey) {
-        return Base64.getEncoder().encodeToString(encodeHmacSHA256WithHexKey(text, hexKey));
+    public static String SHA256WithHexKeyToBase64(String text, String hexKey) {
+        return Base64.getEncoder().encodeToString(SHA256WithHexKey(text, hexKey));
     }
 
-    public static String encodeHmacSHA256WithHexKeyToHex(String text, String hexKey) {
-        return Hex.toHexString(encodeHmacSHA256WithHexKey(text, hexKey));
+    public static String SHA256WithHexKeyToHex(String text, String hexKey) {
+        return Hex.toHexString(SHA256WithHexKey(text, hexKey));
     }
 
-    public static byte[] encodeHmacSHA256WithBase64Key(String text, String base64Key) {
+    public static byte[] SHA256WithBase64Key(String text, String base64Key) {
         byte[] data = text.getBytes(StandardCharsets.UTF_8);
         byte[] key = Base64.getDecoder().decode(base64Key);
-        return encodeHmacSHA256(data, key);
+        return SHA256(data, key);
     }
 
-    public static String encodeHmacSHA256WithBase64KeyToBase64(String text, String base64Key) {
-        return Base64.getEncoder().encodeToString(encodeHmacSHA256WithBase64Key(text, base64Key));
+    public static String SHA256WithBase64KeyToBase64(String text, String base64Key) {
+        return Base64.getEncoder().encodeToString(SHA256WithBase64Key(text, base64Key));
     }
 
-    public static String encodeHmacSHA256WithBase64KeyToHex(String text, String base64Key) {
-        return Hex.toHexString(encodeHmacSHA256WithBase64Key(text, base64Key));
+    public static String SHA256WithBase64KeyToHex(String text, String base64Key) {
+        return Hex.toHexString(SHA256WithBase64Key(text, base64Key));
     }
 
     /**
@@ -221,8 +221,8 @@ public abstract class HMACUtil {
      * @param key  密钥
      * @return byte[] 消息摘要
      */
-    public static byte[] encodeHmacSM3(byte[] data, byte[] key) {
-        return encodeHmac(data, key, HMAC_SM3, BouncyCastleProvider.PROVIDER_NAME);
+    public static byte[] SM3(byte[] data, byte[] key) {
+        return hmac(data, key, HMAC_SM3, BouncyCastleProvider.PROVIDER_NAME);
     }
 
     /**
@@ -232,8 +232,8 @@ public abstract class HMACUtil {
      * @param key  密钥
      * @return base64 格式的消息摘要
      */
-    public static String encodeHmacSM3ToBase64(byte[] data, byte[] key) {
-        return Base64.getEncoder().encodeToString(encodeHmacSM3(data, key));
+    public static String SM3ToBase64(byte[] data, byte[] key) {
+        return Base64.getEncoder().encodeToString(SM3(data, key));
     }
 
     /**
@@ -243,8 +243,8 @@ public abstract class HMACUtil {
      * @param key  密钥
      * @return hex 格式的消息摘要
      */
-    public static String encodeHmacSM3ToHex(byte[] data, byte[] key) {
-        return Hex.toHexString(encodeHmacSM3(data, key));
+    public static String SM3ToHex(byte[] data, byte[] key) {
+        return Hex.toHexString(SM3(data, key));
     }
 
     /**
@@ -254,10 +254,10 @@ public abstract class HMACUtil {
      * @param hexKey hex 格式的密钥
      * @return byte[] 消息摘要
      */
-    public static byte[] encodeHmacSM3WithHexKey(String text, String hexKey) {
+    public static byte[] SM3WithHexKey(String text, String hexKey) {
         byte[] data = text.getBytes(StandardCharsets.UTF_8);
         byte[] key = Hex.decode(hexKey);
-        return encodeHmacSM3(data, key);
+        return SM3(data, key);
     }
 
     /**
@@ -267,8 +267,8 @@ public abstract class HMACUtil {
      * @param hexKey hex 格式的密钥
      * @return base64 格式的消息摘要
      */
-    public static String encodeHmacSM3WithHexKeyToBase64(String text, String hexKey) {
-        return Base64.getEncoder().encodeToString(encodeHmacSM3WithHexKey(text, hexKey));
+    public static String SM3WithHexKeyToBase64(String text, String hexKey) {
+        return Base64.getEncoder().encodeToString(SM3WithHexKey(text, hexKey));
     }
 
     /**
@@ -278,8 +278,8 @@ public abstract class HMACUtil {
      * @param hexKey hex 格式的密钥
      * @return hex 格式的消息摘要
      */
-    public static String encodeHmacSM3WithHexKeyToHex(String text, String hexKey) {
-        return Hex.toHexString(encodeHmacSM3WithHexKey(text, hexKey));
+    public static String SM3WithHexKeyToHex(String text, String hexKey) {
+        return Hex.toHexString(SM3WithHexKey(text, hexKey));
     }
 
     /**
@@ -289,10 +289,10 @@ public abstract class HMACUtil {
      * @param base64Key base64 格式的密钥
      * @return byte[] 消息摘要
      */
-    public static byte[] encodeHmacSM3WithBase64Key(String text, String base64Key) {
+    public static byte[] SM3WithBase64Key(String text, String base64Key) {
         byte[] data = text.getBytes(StandardCharsets.UTF_8);
         byte[] key = Base64.getDecoder().decode(base64Key);
-        return encodeHmacSM3(data, key);
+        return SM3(data, key);
     }
 
     /**
@@ -302,8 +302,8 @@ public abstract class HMACUtil {
      * @param base64Key base64 格式的密钥
      * @return base64 格式的消息摘要
      */
-    public static String encodeHmacSM3WithBase64KeyToBase64(String text, String base64Key) {
-        return Base64.getEncoder().encodeToString(encodeHmacSM3WithBase64Key(text, base64Key));
+    public static String SM3WithBase64KeyToBase64(String text, String base64Key) {
+        return Base64.getEncoder().encodeToString(SM3WithBase64Key(text, base64Key));
     }
 
     /**
@@ -313,8 +313,8 @@ public abstract class HMACUtil {
      * @param base64Key base64 格式的密钥
      * @return hex 格式的消息摘要
      */
-    public static String encodeHmacSM3WithBase64KeyToHex(String text, String base64Key) {
-        return Hex.toHexString(encodeHmacSM3WithBase64Key(text, base64Key));
+    public static String SM3WithBase64KeyToHex(String text, String base64Key) {
+        return Hex.toHexString(SM3WithBase64Key(text, base64Key));
     }
 
     /**
@@ -361,8 +361,8 @@ public abstract class HMACUtil {
      * @param algorithm 算法类型
      * @return Hmac 消息摘要
      */
-    public static byte[] encodeHmac(byte[] data, byte[] key, String algorithm) {
-        return encodeHmac(data, key, algorithm, null);
+    public static byte[] hmac(byte[] data, byte[] key, String algorithm) {
+        return hmac(data, key, algorithm, null);
     }
 
     /**
@@ -374,7 +374,7 @@ public abstract class HMACUtil {
      * @param provider  jce 实现方
      * @return Hmac 消息摘要
      */
-    public static byte[] encodeHmac(byte[] data, byte[] key, String algorithm, String provider) {
+    public static byte[] hmac(byte[] data, byte[] key, String algorithm, String provider) {
         // 还原密钥
         SecretKeySpec secretKeySpec = new SecretKeySpec(key, algorithm);
         // 实例化 Mac
