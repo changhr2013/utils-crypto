@@ -77,10 +77,6 @@ public abstract class HMACUtil {
         return hmac(data, key, HMAC_MD5);
     }
 
-    public static String MD5ToBase64(byte[] data, byte[] key) {
-        return Base64.getEncoder().encodeToString(MD5(data, key));
-    }
-
     public static String MD5ToHex(byte[] data, byte[] key) {
         return Hex.toHexString(MD5(data, key));
     }
@@ -91,10 +87,6 @@ public abstract class HMACUtil {
         return MD5(data, key);
     }
 
-    public static String MD5WithHexKeyToBase64(String text, String hexKey) {
-        return Base64.getEncoder().encodeToString(MD5WithHexKey(text, hexKey));
-    }
-
     public static String MD5WithHexKeyToHex(String text, String hexKey) {
         return Hex.toHexString(MD5WithHexKey(text, hexKey));
     }
@@ -103,10 +95,6 @@ public abstract class HMACUtil {
         byte[] data = text.getBytes(StandardCharsets.UTF_8);
         byte[] key = Base64.getDecoder().decode(base64Key);
         return MD5(data, key);
-    }
-
-    public static String MD5WithBase64KeyToBase64(String text, String base64Key) {
-        return Base64.getEncoder().encodeToString(MD5WithBase64Key(text, base64Key));
     }
 
     public static String MD5WithBase64KeyToHex(String text, String base64Key) {
@@ -151,10 +139,6 @@ public abstract class HMACUtil {
         return hmac(data, key, HMAC_SHA256);
     }
 
-    public static String SHA256ToBase64(byte[] data, byte[] key) {
-        return Base64.getEncoder().encodeToString(SHA256(data, key));
-    }
-
     public static String SHA256ToHex(byte[] data, byte[] key) {
         return Hex.toHexString(SHA256(data, key));
     }
@@ -165,10 +149,6 @@ public abstract class HMACUtil {
         return SHA256(data, key);
     }
 
-    public static String SHA256WithHexKeyToBase64(String text, String hexKey) {
-        return Base64.getEncoder().encodeToString(SHA256WithHexKey(text, hexKey));
-    }
-
     public static String SHA256WithHexKeyToHex(String text, String hexKey) {
         return Hex.toHexString(SHA256WithHexKey(text, hexKey));
     }
@@ -177,10 +157,6 @@ public abstract class HMACUtil {
         byte[] data = text.getBytes(StandardCharsets.UTF_8);
         byte[] key = Base64.getDecoder().decode(base64Key);
         return SHA256(data, key);
-    }
-
-    public static String SHA256WithBase64KeyToBase64(String text, String base64Key) {
-        return Base64.getEncoder().encodeToString(SHA256WithBase64Key(text, base64Key));
     }
 
     public static String SHA256WithBase64KeyToHex(String text, String base64Key) {
@@ -230,17 +206,6 @@ public abstract class HMACUtil {
      *
      * @param data 待做摘要的数据
      * @param key  密钥
-     * @return base64 格式的消息摘要
-     */
-    public static String SM3ToBase64(byte[] data, byte[] key) {
-        return Base64.getEncoder().encodeToString(SM3(data, key));
-    }
-
-    /**
-     * HmacSM3 消息摘要
-     *
-     * @param data 待做摘要的数据
-     * @param key  密钥
      * @return hex 格式的消息摘要
      */
     public static String SM3ToHex(byte[] data, byte[] key) {
@@ -265,17 +230,6 @@ public abstract class HMACUtil {
      *
      * @param text   字符串格式的待摘要的数据
      * @param hexKey hex 格式的密钥
-     * @return base64 格式的消息摘要
-     */
-    public static String SM3WithHexKeyToBase64(String text, String hexKey) {
-        return Base64.getEncoder().encodeToString(SM3WithHexKey(text, hexKey));
-    }
-
-    /**
-     * HmacSM3 消息摘要
-     *
-     * @param text   字符串格式的待摘要的数据
-     * @param hexKey hex 格式的密钥
      * @return hex 格式的消息摘要
      */
     public static String SM3WithHexKeyToHex(String text, String hexKey) {
@@ -293,17 +247,6 @@ public abstract class HMACUtil {
         byte[] data = text.getBytes(StandardCharsets.UTF_8);
         byte[] key = Base64.getDecoder().decode(base64Key);
         return SM3(data, key);
-    }
-
-    /**
-     * HmacSM3 消息摘要
-     *
-     * @param text      字符串格式的待摘要的数据
-     * @param base64Key base64 格式的密钥
-     * @return base64 格式的消息摘要
-     */
-    public static String SM3WithBase64KeyToBase64(String text, String base64Key) {
-        return Base64.getEncoder().encodeToString(SM3WithBase64Key(text, base64Key));
     }
 
     /**
