@@ -14,7 +14,6 @@ import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.Security;
-import java.util.Arrays;
 
 /**
  * AES 对称加密算法工具类
@@ -47,14 +46,15 @@ public abstract class AESUtil {
      * Bouncy Castle 支持 PKCS7Padding 填充方式
      */
     public static final String CBC_PKCS_5_PADDING = "AES/CBC/PKCS5Padding";
+    public static final String CBC_NO_PADDING = "AES/CBC/NoPadding";
 
-    public static final String CTR_PKCS_5_PADDING = "AES/CTR/NoPadding";
+    public static final String CTR_NO_PADDING = "AES/CTR/NoPadding";
+    public static final String GCM_NO_PADDING = "AES/GCM/NoPadding";
 
     public static final String ECB_NO_PADDING = "AES/ECB/NoPadding";
     public static final String ECB_PKCS_5_PADDING = "AES/ECB/PKCS5Padding";
     public static final String ECB_PKCS_7_PADDING = "AES/ECB/PKCS7Padding";
 
-    public static final String GCM_NO_PADDING = "AES/GCM/NoPadding";
 
     /**
      * 转换密钥
@@ -68,7 +68,7 @@ public abstract class AESUtil {
     }
 
     /**
-     * 解密
+     * 解密，默认为 ECB/PKCS5 模式
      *
      * @param data 待解密数据
      * @param key  密钥
@@ -79,7 +79,7 @@ public abstract class AESUtil {
     }
 
     /**
-     * 解密
+     * 解密，ECB 模式
      *
      * @param data            待解密数据
      * @param key             密钥
@@ -123,7 +123,7 @@ public abstract class AESUtil {
     }
 
     /**
-     * 解密，使用 BC 库 PKCS7Padding
+     * 解密，ECB 模式，使用 BC 库 PKCS7Padding
      *
      * @param data 待解密数据
      * @param key  密钥
@@ -161,7 +161,25 @@ public abstract class AESUtil {
     }
 
     /**
-     * 解密 AES-GCM 算法加密的数据
+     * 生成任意长度的随机数
+     *
+     * @param size 随机数的字节长度
+     * @return byte[] 随机数
+     */
+    public static byte[] generateNonce(int size) {
+        SecureRandom random;
+        try {
+            random = SecureRandom.getInstanceStrong();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("no such algorithm exception");
+        }
+        byte[] nonce = new byte[size];
+        random.nextBytes(nonce);
+        return nonce;
+    }
+
+    /**
+     * 解密，使用 AES-GCM 算法
      *
      * @param data  待解密数据
      * @param key   AES 密钥
@@ -239,7 +257,7 @@ public abstract class AESUtil {
     }
 
     /**
-     * 加密
+     * 加密，默认使用 ECB/PKCS5 模式
      *
      * @param data 待加密数据
      * @param key  密钥
@@ -250,7 +268,7 @@ public abstract class AESUtil {
     }
 
     /**
-     * 加密
+     * 加密，ECB 模式
      *
      * @param data            待加密数据
      * @param key             密钥
@@ -290,7 +308,7 @@ public abstract class AESUtil {
     }
 
     /**
-     * 加密，使用 BC 库 PKCS7Padding
+     * 加密，ECB 模式，使用 BC 库 PKCS7Padding
      *
      * @param data 待加密数据
      * @param key  密钥
@@ -311,7 +329,7 @@ public abstract class AESUtil {
     }
 
     /**
-     * 加密
+     * 加密，CTL 或 CBC 模式
      *
      * @param data            待加密数据
      * @param key             密钥
@@ -329,9 +347,13 @@ public abstract class AESUtil {
             // 初始化，设置为解密模式
             cipher.init(Cipher.ENCRYPT_MODE, k, ivParameterSpec);
 
+            if (CBC_NO_PADDING.equals(cipherAlgorithm)) {
+                data = formatWithZeroPadding(data, cipher.getBlockSize());
+            }
             byte[] decrypted = new byte[cipher.getOutputSize(data.length)];
 
             int updateSize = cipher.update(data, 0, data.length, decrypted, 0);
+
             // 执行操作
             cipher.doFinal(decrypted, updateSize);
             return decrypted;
@@ -341,11 +363,11 @@ public abstract class AESUtil {
     }
 
     /**
-     * 解密
+     * 解密，CTL 或 CBC 模式
      *
      * @param data            待解密数据
      * @param key             AES 密钥
-     * @param nonce              IV 向量
+     * @param nonce           IV 向量
      * @param cipherAlgorithm 算法/工作模式/填充模式
      * @return byte[] 解密后的数据
      */
@@ -365,9 +387,13 @@ public abstract class AESUtil {
             int updateSize = cipher.update(data, 0, data.length, decrypted, 0);
             // 执行操作
             cipher.doFinal(decrypted, updateSize);
+
+            if (CBC_NO_PADDING.equals(cipherAlgorithm)) {
+                decrypted = removeZeroPadding(decrypted, cipher.getBlockSize());
+            }
             return decrypted;
         } catch (Exception e) {
-            throw new RuntimeException("AES decrypt error", e);
+            throw new RuntimeException(cipherAlgorithm + " decrypt error", e);
         }
     }
 
@@ -439,10 +465,26 @@ public abstract class AESUtil {
 
         System.out.println("========== AES-CTR ==========");
         byte[] iv = SecureRandom.getSeed(16);
-        byte[] encrypt3 = AESUtil.encrypt(data, key, iv, AESUtil.CTR_PKCS_5_PADDING);
+        byte[] encrypt3 = AESUtil.encrypt(data, key, iv, AESUtil.CTR_NO_PADDING);
         System.out.println(Hex.toHexString(encrypt3));
 
-        byte[] decrypt3 = AESUtil.decrypt(encrypt3, key, iv, AESUtil.CTR_PKCS_5_PADDING);
+        byte[] decrypt3 = AESUtil.decrypt(encrypt3, key, iv, AESUtil.CTR_NO_PADDING);
         System.out.println(new String(decrypt3, StandardCharsets.UTF_8));
+
+        System.out.println("========== AES-CBC-PKCS5 ==========");
+        byte[] iv4 = SecureRandom.getSeed(16);
+        byte[] encrypt4 = AESUtil.encrypt(data, key, iv4, AESUtil.CBC_PKCS_5_PADDING);
+        System.out.println(Hex.toHexString(encrypt4));
+
+        byte[] decrypt4 = AESUtil.decrypt(encrypt4, key, iv4, AESUtil.CBC_PKCS_5_PADDING);
+        System.out.println(new String(decrypt3, StandardCharsets.UTF_8));
+
+        System.out.println("========== AES-CBC-NoPadding ==========");
+        byte[] iv5 = SecureRandom.getSeed(16);
+        byte[] encrypt5 = AESUtil.encrypt(data, key, iv5, AESUtil.CBC_NO_PADDING);
+        System.out.println(Hex.toHexString(encrypt5));
+
+        byte[] decrypt5 = AESUtil.decrypt(encrypt5, key, iv5, AESUtil.CBC_NO_PADDING);
+        System.out.println(new String(decrypt5, StandardCharsets.UTF_8));
     }
 }
