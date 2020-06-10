@@ -341,7 +341,7 @@ public abstract class SM2Util {
      * @param data 公钥加密的密文
      * @return 未压缩 c1 的密文
      */
-    private static byte[] convertDataToUnCompressed(byte[] data) {
+    public static byte[] convertDataToUnCompressed(byte[] data) {
         ECPoint p;
         int expectedLength = (x9ECParameters.getCurve().getFieldSize() + 7) / 8;
         byte type = data[0];
