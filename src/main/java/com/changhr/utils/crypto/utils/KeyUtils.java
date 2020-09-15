@@ -10,28 +10,29 @@ import org.bouncycastle.jce.spec.ECParameterSpec;
 import java.security.*;
 
 public class KeyUtils {
+
     public static final String BC = BouncyCastleProvider.PROVIDER_NAME;
 
     static {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    public static KeyPair generateKeyPair(String algo) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+    public static KeyPair generateKeyPair(String algorithm) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException {
         KeyPairGenerator keyPairGenerator;
         SecureRandom random = new SecureRandom();
-        if ("RSA".equalsIgnoreCase(algo)) {
+        if ("RSA".equalsIgnoreCase(algorithm)) {
             keyPairGenerator = KeyPairGenerator.getInstance("RSA", BC);
             keyPairGenerator.initialize(2048, random);
-        } else if ("SM2".equalsIgnoreCase(algo)) {
+        } else if ("SM2".equalsIgnoreCase(algorithm)) {
             ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("sm2p256v1");
             keyPairGenerator = KeyPairGenerator.getInstance("ECDSA", BC);
             keyPairGenerator.initialize(ecSpec, random);
-        } else if ("ECC".equalsIgnoreCase(algo)) {
+        } else if ("ECC".equalsIgnoreCase(algorithm)) {
             ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256k1");
             keyPairGenerator = KeyPairGenerator.getInstance("ECDSA", BC);
             keyPairGenerator.initialize(ecSpec, random);
         } else {
-            throw new IllegalArgumentException("算法不支持");
+            throw new IllegalArgumentException("不支持的算法：" + algorithm);
         }
         return keyPairGenerator.generateKeyPair();
     }

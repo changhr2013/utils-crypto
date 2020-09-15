@@ -23,12 +23,13 @@ import java.util.Locale;
 import java.util.UUID;
 
 public class CertUtils {
+
     public static PKCS10CertificationRequest generateCSR(X500Name subject, PublicKey publicKey, PrivateKey privateKey) {
         try {
             SubjectPublicKeyInfo subjectPublicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.getEncoded());
             CertificationRequestInfo info = new CertificationRequestInfo(subject, subjectPublicKeyInfo, new DERSet());
             byte[] signature;
-            AlgorithmIdentifier signAlgorithm = getSignAlgo(subjectPublicKeyInfo.getAlgorithm());
+            AlgorithmIdentifier signAlgorithm = getSignAlgorithm(subjectPublicKeyInfo.getAlgorithm());
             if (signAlgorithm.getAlgorithm().equals(GMObjectIdentifiers.sm2sign_with_sm3)) {
                 signature = Signers.SM2Sign(info.getEncoded(ASN1Encoding.DER), privateKey);
             } else if (signAlgorithm.getAlgorithm().equals(X9ObjectIdentifiers.ecdsa_with_SHA256)) {
@@ -96,7 +97,7 @@ public class CertUtils {
         tbsGen.setSubjectPublicKeyInfo(subjectPublicKeyInfo);
         tbsGen.setExtensions(extensionsGenerator.generate());
         // 签名算法标识等于密钥算法标识
-        tbsGen.setSignature(getSignAlgo(subjectPublicKeyInfo.getAlgorithm()));
+        tbsGen.setSignature(getSignAlgorithm(subjectPublicKeyInfo.getAlgorithm()));
         TBSCertificate tbs = tbsGen.generateTBSCertificate();
         return assembleCert(tbs, subjectPublicKeyInfo, keyPair.getPrivate());
     }
@@ -118,7 +119,7 @@ public class CertUtils {
         }
         ASN1EncodableVector v = new ASN1EncodableVector();
         v.add(tbsCertificate);
-        v.add(getSignAlgo(issuerSubjectPublicKeyInfo.getAlgorithm()));
+        v.add(getSignAlgorithm(issuerSubjectPublicKeyInfo.getAlgorithm()));
         v.add(new DERBitString(signature));
         return Certificate.getInstance(new DERSequence(v));
     }
@@ -136,7 +137,7 @@ public class CertUtils {
         }
     }
 
-    static AlgorithmIdentifier getSignAlgo(AlgorithmIdentifier asymAlgo) {
+    static AlgorithmIdentifier getSignAlgorithm(AlgorithmIdentifier asymAlgo) {
         // 根据公钥算法标识返回对应签名算法标识
         if (asymAlgo.getAlgorithm().equals(X9ObjectIdentifiers.id_ecPublicKey)
                 && asymAlgo.getParameters().equals(GMObjectIdentifiers.sm2p256v1)) {

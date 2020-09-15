@@ -1,5 +1,6 @@
 package com.changhr.utils.crypto.asymmetric;
 
+import com.changhr.utils.crypto.utils.Signers;
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.gm.GMNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
@@ -30,6 +31,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -713,7 +715,7 @@ public abstract class SM2Util {
      * @param swapPrivateKey 交换私钥（D 分量字节数组）
      * @return 预处理后的输入数据
      */
-    public byte[] getPreDataByPrivateKey(byte[] inData, byte[] swapPrivateKey) {
+    public static byte[] getPreDataByPrivateKey(byte[] inData, byte[] swapPrivateKey) {
         BCECPrivateKey privateKey = buildPrivateKey(swapPrivateKey);
         AsymmetricKeyParameter ecParam;
         try {
@@ -733,7 +735,7 @@ public abstract class SM2Util {
      * @param swapPublicKey 公钥原始值
      * @return 预处理后的输入数据
      */
-    public byte[] getPreDataByPublicKey(byte[] inData, byte[] swapPublicKey) {
+    public static byte[] getPreDataByPublicKey(byte[] inData, byte[] swapPublicKey) {
         BCECPublicKey publicKey = buildPublicKey(swapPublicKey);
 
         AsymmetricKeyParameter ecParam;
@@ -747,7 +749,7 @@ public abstract class SM2Util {
         return hashMergeInData(z, inData);
     }
 
-    private byte[] hashMergeInData(byte[] z, byte[] inData) {
+    private static byte[] hashMergeInData(byte[] z, byte[] inData) {
         final SM3Digest digest = new SM3Digest();
         digest.update(z, 0, z.length);
         digest.update(inData, 0, inData.length);
@@ -765,7 +767,7 @@ public abstract class SM2Util {
      * @param param      公钥 or 私钥
      * @return 预处理的前缀参数
      */
-    private byte[] getZ(boolean forSigning, CipherParameters param) {
+    private static byte[] getZ(boolean forSigning, CipherParameters param) {
 
         final DSAKCalculator kCalculator = new RandomDSAKCalculator();
 
@@ -823,15 +825,33 @@ public abstract class SM2Util {
         return result;
     }
 
-    private void addUserID(Digest digest, byte[] userID) {
+    private static void addUserID(Digest digest, byte[] userID) {
         int len = userID.length * 8;
         digest.update((byte) (len >> 8 & 0xFF));
         digest.update((byte) (len & 0xFF));
         digest.update(userID, 0, userID.length);
     }
 
-    private void addFieldElement(Digest digest, ECFieldElement v) {
+    private static void addFieldElement(Digest digest, ECFieldElement v) {
         byte[] p = v.getEncoded();
         digest.update(p, 0, p.length);
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        byte[] inData = "hello world!".getBytes(StandardCharsets.UTF_8);
+
+        Map<String, Object> keyMap = SM2Util.initKey();
+
+        byte[] publicKey = SM2Util.getSwapPublicKey(keyMap);
+
+        byte[] preInData = SM2Util.getPreDataByPublicKey(inData, publicKey);
+        System.out.println(Hex.toHexString(preInData));
+
+        byte[] privateKey = SM2Util.getSwapPrivateKey(keyMap);
+
+        BCECPrivateKey bcecPrivateKey = SM2Util.buildPrivateKey(privateKey);
+        byte[] sign1 = Signers.SM2Sign(inData, bcecPrivateKey);
+
     }
 }
