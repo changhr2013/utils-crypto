@@ -1,6 +1,9 @@
 package com.changhr.utils.crypto.asymmetric;
 
+import org.bouncycastle.util.encoders.Hex;
+
 import javax.crypto.Cipher;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -170,11 +173,11 @@ public abstract class RSAUtil {
      * 默认使用 RSA/ECB/PKCS1Padding 方式
      *
      * @param data   待加密数据
-     * @param pubKey 私钥
+     * @param priKey 私钥
      * @return byte[] 加密后的数据
      */
-    public static byte[] encryptByPrivateKey(byte[] data, byte[] pubKey) {
-        return encryptByPrivateKey(data, pubKey, ECB_PKCS_1_PADDING);
+    public static byte[] encryptByPrivateKey(byte[] data, byte[] priKey) {
+        return encryptByPrivateKey(data, priKey, ECB_PKCS_1_PADDING);
     }
 
     /**
@@ -308,5 +311,19 @@ public abstract class RSAUtil {
         keyMap.put(PUBLIC_KEY, publicKey);
         keyMap.put(PRIVATE_KEY, privateKey);
         return keyMap;
+    }
+
+    public static void main(String[] args) {
+        byte[] test = "hello".getBytes(StandardCharsets.UTF_8);
+        Map<String, Object> keyMap = RSAUtil.initKey(512);
+        byte[] privateKey = RSAUtil.getPrivateKey(keyMap);
+        byte[] publicKey = RSAUtil.getPublicKey(keyMap);
+
+        byte[] bytes = RSAUtil.encryptByPrivateKey(test, privateKey);
+        System.out.println(Hex.toHexString(bytes));
+
+        byte[] decrypt = RSAUtil.decryptByPublicKey(bytes, publicKey);
+
+        System.out.println(new String(decrypt, StandardCharsets.UTF_8));
     }
 }

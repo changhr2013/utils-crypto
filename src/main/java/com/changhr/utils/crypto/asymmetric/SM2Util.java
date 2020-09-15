@@ -3,20 +3,27 @@ package com.changhr.utils.crypto.asymmetric;
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.gm.GMNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.CipherParameters;
+import org.bouncycastle.crypto.CryptoServicesRegistrar;
+import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.InvalidCipherTextException;
+import org.bouncycastle.crypto.digests.SM3Digest;
 import org.bouncycastle.crypto.engines.SM2Engine;
-import org.bouncycastle.crypto.params.ECDomainParameters;
-import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
-import org.bouncycastle.crypto.params.ECPublicKeyParameters;
-import org.bouncycastle.crypto.params.ParametersWithRandom;
+import org.bouncycastle.crypto.params.*;
+import org.bouncycastle.crypto.signers.DSAKCalculator;
+import org.bouncycastle.crypto.signers.RandomDSAKCalculator;
+import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.bouncycastle.jcajce.provider.asymmetric.util.ECUtil;
 import org.bouncycastle.jcajce.spec.SM2ParameterSpec;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
+import org.bouncycastle.math.ec.ECFieldElement;
 import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.math.ec.FixedPointCombMultiplier;
 import org.bouncycastle.util.encoders.Hex;
 
 import java.io.File;
@@ -697,5 +704,134 @@ public abstract class SM2Util {
         ECPoint ecPoint = x9ECParameters.getCurve().decodePoint(swapPublicKey);
         ECPublicKeySpec ecPublicKeySpec = new ECPublicKeySpec(ecPoint, ecParameterSpec);
         return new BCECPublicKey(KEY_ALGORITHM, ecPublicKeySpec, BouncyCastleProvider.CONFIGURATION);
+    }
+
+    /**
+     * 通过私钥生成预处理数据
+     *
+     * @param inData         原始输入数据
+     * @param swapPrivateKey 交换私钥（D 分量字节数组）
+     * @return 预处理后的输入数据
+     */
+    public byte[] getPreDataByPrivateKey(byte[] inData, byte[] swapPrivateKey) {
+        BCECPrivateKey privateKey = buildPrivateKey(swapPrivateKey);
+        AsymmetricKeyParameter ecParam;
+        try {
+            ecParam = PrivateKeyFactory.createKey(privateKey.getEncoded());
+        } catch (Exception e) {
+            throw new RuntimeException("PrivateKeyFactory create private key failed", e);
+        }
+        byte[] z = getZ(true, new ParametersWithID(ecParam, USER_ID));
+
+        return hashMergeInData(z, inData);
+    }
+
+    /**
+     * 通过公钥生成预处理数据
+     *
+     * @param inData        交换公钥的字节数组（标志位 + 点）
+     * @param swapPublicKey 公钥原始值
+     * @return 预处理后的输入数据
+     */
+    public byte[] getPreDataByPublicKey(byte[] inData, byte[] swapPublicKey) {
+        BCECPublicKey publicKey = buildPublicKey(swapPublicKey);
+
+        AsymmetricKeyParameter ecParam;
+        try {
+            ecParam = ECUtil.generatePublicKeyParameter(publicKey);
+        } catch (InvalidKeyException e) {
+            throw new RuntimeException("ECUtil generate public key failed");
+        }
+        byte[] z = getZ(false, new ParametersWithID(ecParam, USER_ID));
+
+        return hashMergeInData(z, inData);
+    }
+
+    private byte[] hashMergeInData(byte[] z, byte[] inData) {
+        final SM3Digest digest = new SM3Digest();
+        digest.update(z, 0, z.length);
+        digest.update(inData, 0, inData.length);
+
+        byte[] result = new byte[digest.getDigestSize()];
+        digest.doFinal(result, 0);
+        digest.reset();
+        return result;
+    }
+
+    /**
+     * SM2 预处理
+     *
+     * @param forSigning 是否是签名操作
+     * @param param      公钥 or 私钥
+     * @return 预处理的前缀参数
+     */
+    private byte[] getZ(boolean forSigning, CipherParameters param) {
+
+        final DSAKCalculator kCalculator = new RandomDSAKCalculator();
+
+        final SM3Digest digest = new SM3Digest();
+
+        ECPoint pubPoint;
+        ECKeyParameters ecKey;
+        ECDomainParameters ecParams;
+
+        CipherParameters baseParam;
+        byte[] userID;
+
+        if (param instanceof ParametersWithID) {
+            baseParam = ((ParametersWithID) param).getParameters();
+            userID = ((ParametersWithID) param).getID();
+        } else {
+            baseParam = param;
+            userID = Hex.decode("31323334353637383132333435363738"); // the default value
+        }
+
+        if (forSigning) {
+            if (baseParam instanceof ParametersWithRandom) {
+                ParametersWithRandom rParam = (ParametersWithRandom) baseParam;
+
+                ecKey = (ECKeyParameters) rParam.getParameters();
+                ecParams = ecKey.getParameters();
+                kCalculator.init(ecParams.getN(), rParam.getRandom());
+            } else {
+                ecKey = (ECKeyParameters) baseParam;
+                ecParams = ecKey.getParameters();
+                kCalculator.init(ecParams.getN(), CryptoServicesRegistrar.getSecureRandom());
+            }
+            pubPoint = new FixedPointCombMultiplier().multiply(ecParams.getG(), ((ECPrivateKeyParameters) ecKey).getD()).normalize();
+        } else {
+            ecKey = (ECKeyParameters) baseParam;
+            ecParams = ecKey.getParameters();
+            pubPoint = ((ECPublicKeyParameters) ecKey).getQ();
+        }
+
+        digest.reset();
+
+        addUserID(digest, userID);
+
+        addFieldElement(digest, ecParams.getCurve().getA());
+        addFieldElement(digest, ecParams.getCurve().getB());
+        addFieldElement(digest, ecParams.getG().getAffineXCoord());
+        addFieldElement(digest, ecParams.getG().getAffineYCoord());
+        addFieldElement(digest, pubPoint.getAffineXCoord());
+        addFieldElement(digest, pubPoint.getAffineYCoord());
+
+        byte[] result = new byte[digest.getDigestSize()];
+
+        digest.doFinal(result, 0);
+
+        return result;
+    }
+
+    private void addUserID(Digest digest, byte[] userID) {
+        int len = userID.length * 8;
+        digest.update((byte) (len >> 8 & 0xFF));
+        digest.update((byte) (len & 0xFF));
+        digest.update(userID, 0, userID.length);
+    }
+
+    private void addFieldElement(Digest digest, ECFieldElement v) {
+        byte[] p = v.getEncoded();
+        digest.update(p, 0, p.length);
     }
 }

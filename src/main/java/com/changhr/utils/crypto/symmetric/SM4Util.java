@@ -47,6 +47,7 @@ public abstract class SM4Util {
      * Bouncy Castle 支持 PKCS7Padding 填充方式
      */
     public static final String CIPHER_ALGORITHM = "SM4/ECB/PKCS5Padding";
+    public static final String ECB_NO_PADDING = "SM4/ECB/NoPadding";
 
     /**
      * 生成 SM4 对称密钥
@@ -89,6 +90,20 @@ public abstract class SM4Util {
         }
     }
 
+    public static byte[] encrypt(byte[] keyBytes, byte[] plain, final String cipherAlgorithm) {
+        if (keyBytes.length != KEY_LENGTH) {
+            throw new RuntimeException("error key length");
+        }
+        try {
+            Key key = new SecretKeySpec(keyBytes, KEY_ALGORITHM);
+            Cipher out = Cipher.getInstance(cipherAlgorithm, BouncyCastleProvider.PROVIDER_NAME);
+            out.init(Cipher.ENCRYPT_MODE, key);
+            return out.doFinal(plain);
+        } catch (Exception e) {
+            throw new RuntimeException("sm4 encrypt error", e);
+        }
+    }
+
     /**
      * SM4 对称密钥解密
      *
@@ -108,5 +123,31 @@ public abstract class SM4Util {
         } catch (Exception e) {
             throw new RuntimeException("sm4 decrypt error", e);
         }
+    }
+
+    public static byte[] decrypt(byte[] keyBytes, byte[] cipher, final String cipherAlgorithm) {
+        if (keyBytes.length != KEY_LENGTH) {
+            throw new RuntimeException("error key length");
+        }
+        try {
+            Key key = new SecretKeySpec(keyBytes, KEY_ALGORITHM);
+            Cipher in = Cipher.getInstance(cipherAlgorithm, BouncyCastleProvider.PROVIDER_NAME);
+            in.init(Cipher.DECRYPT_MODE, key);
+            return in.doFinal(cipher);
+        } catch (Exception e) {
+            throw new RuntimeException("sm4 decrypt error", e);
+        }
+    }
+
+    private static byte[] formatWithZeroPadding(byte[] data, final int blockSize) {
+        final int length = data.length;
+        final int remainLength = length % blockSize;
+
+        if (remainLength > 0) {
+            byte[] inputData = new byte[length + blockSize - remainLength];
+            System.arraycopy(data, 0, inputData, 0, length);
+            return inputData;
+        }
+        return data;
     }
 }
