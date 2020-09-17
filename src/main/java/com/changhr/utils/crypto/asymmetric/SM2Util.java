@@ -40,7 +40,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 国密 SM2 非对称加密算法工具类
+ * 国密 SM2 非对称加/解密算法工具类
+ * BC 库 SM2 算法签名/验签使用 DER 编码；加密/解密使用 c1||c2||c3 旧标准，不使用 DER 编码
+ *
+ * 此工具类
+ * encrypt/decrypt: 使用 c1||c3||c2 新标准，不使用 DER 编码
+ * encryptWithDER/decryptWithDER: 使用 c1||c3||c2 新标准，使用 DER 编码
+ *
+ * encryptOld/decryptOld: 使用 c1||c2||c3 旧标准，不使用 DER 编码
+ * encryptOldWithDER/decryptOldWithDER: 使用 c1||c2||c3 旧标准，使用 DER 编码
+ *
+ * sign/verify: 签名/验签方法不使用 DER 编码
+ * signWithAsn1/verifyWithAsn1: 签名/验签方法使用 DER 编码
  *
  * @author changhr
  */

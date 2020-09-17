@@ -1,6 +1,7 @@
 package com.changhr.utils.crypto.symmetric;
 
 import com.changhr.utils.crypto.asymmetric.SM2Util;
+import com.changhr.utils.crypto.utils.PaddingUtil;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
 
@@ -81,17 +82,7 @@ public abstract class SM4Util {
      * @return byte[]  加密后的数据
      */
     public static byte[] encrypt(byte[] keyBytes, byte[] plain) {
-        if (keyBytes.length != KEY_LENGTH) {
-            throw new RuntimeException("error key length");
-        }
-        try {
-            Key key = new SecretKeySpec(keyBytes, KEY_ALGORITHM);
-            Cipher out = Cipher.getInstance(ECB_PKCS_5_PADDING, BouncyCastleProvider.PROVIDER_NAME);
-            out.init(Cipher.ENCRYPT_MODE, key);
-            return out.doFinal(plain);
-        } catch (Exception e) {
-            throw new RuntimeException("sm4 encrypt error", e);
-        }
+        return encrypt(keyBytes, plain, ECB_PKCS_5_PADDING);
     }
 
     public static byte[] encrypt(byte[] keyBytes, byte[] plain, final String cipherAlgorithm) {
@@ -105,7 +96,7 @@ public abstract class SM4Util {
 
             // 发现使用 NoPadding 时，使用 ZeroPadding 填充
             if (ECB_NO_PADDING.equals(cipherAlgorithm)) {
-                return cipher.doFinal(formatWithZeroPadding(plain, cipher.getBlockSize()));
+                return cipher.doFinal(PaddingUtil.formatWithZeroPadding(plain, cipher.getBlockSize()));
             }
 
             return cipher.doFinal(plain);
@@ -122,17 +113,7 @@ public abstract class SM4Util {
      * @return byte[]  解密后的数据
      */
     public static byte[] decrypt(byte[] keyBytes, byte[] cipher) {
-        if (keyBytes.length != KEY_LENGTH) {
-            throw new RuntimeException("error key length");
-        }
-        try {
-            Key key = new SecretKeySpec(keyBytes, KEY_ALGORITHM);
-            Cipher in = Cipher.getInstance(ECB_PKCS_5_PADDING, BouncyCastleProvider.PROVIDER_NAME);
-            in.init(Cipher.DECRYPT_MODE, key);
-            return in.doFinal(cipher);
-        } catch (Exception e) {
-            throw new RuntimeException("sm4 decrypt error", e);
-        }
+        return decrypt(keyBytes, cipher, ECB_PKCS_5_PADDING);
     }
 
     public static byte[] decrypt(byte[] keyBytes, byte[] cipher, final String cipherAlgorithm) {
@@ -146,41 +127,13 @@ public abstract class SM4Util {
 
             // 发现使用 NoPadding 时，使用 ZeroPadding 填充
             if (ECB_NO_PADDING.equals(cipherAlgorithm)) {
-                return removeZeroPadding(in.doFinal(cipher), in.getBlockSize());
+                return PaddingUtil.removeZeroPadding(in.doFinal(cipher), in.getBlockSize());
             }
 
             return in.doFinal(cipher);
         } catch (Exception e) {
             throw new RuntimeException("sm4 decrypt error", e);
         }
-    }
-
-    private static byte[] formatWithZeroPadding(byte[] data, final int blockSize) {
-        final int length = data.length;
-        final int remainLength = length % blockSize;
-
-        if (remainLength > 0) {
-            byte[] inputData = new byte[length + blockSize - remainLength];
-            System.arraycopy(data, 0, inputData, 0, length);
-            return inputData;
-        }
-        return data;
-    }
-
-    private static byte[] removeZeroPadding(byte[] data, final int blockSize) {
-        final int length = data.length;
-        final int remainLength = length % blockSize;
-        if (remainLength == 0) {
-            // 解码后的数据正好是块大小的整数倍，说明可能存在补 0 的情况，去掉末尾所有的 0
-            int i = length - 1;
-            while (i >= 0 && 0 == data[i]) {
-                i--;
-            }
-            byte[] outputData = new byte[i + 1];
-            System.arraycopy(data, 0, outputData, 0, outputData.length);
-            return outputData;
-        }
-        return data;
     }
 
     public static void main(String[] args) {

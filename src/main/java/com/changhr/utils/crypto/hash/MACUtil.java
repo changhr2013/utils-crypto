@@ -49,7 +49,7 @@ public class MACUtil {
      * @param data 待进行 C-MAC 的数据
      * @return byte[] C-MAC 的结果
      */
-    public static byte[] generateMacCMAC(byte[] key, byte[] data) {
+    public static byte[] generateCMac(byte[] key, byte[] data) {
         return generateMac(key, data, AES_C_MAC, false);
     }
 
@@ -60,7 +60,7 @@ public class MACUtil {
      * @param data 待进行 G-MAC 的数据
      * @return byte[] G-MAC 的结果
      */
-    public static byte[] generateMacGMAC(byte[] key, byte[] data) {
+    public static byte[] generateGMac(byte[] key, byte[] data) {
         return generateMac(key, data, AES_G_MAC, true);
     }
 
@@ -71,7 +71,7 @@ public class MACUtil {
      * @param data 待进行 CCM-MAC 的数据
      * @return byte[] CCM-MAC 的结果
      */
-    public static byte[] generateMacCCM(byte[] key, byte[] data) {
+    public static byte[] generateCCMMac(byte[] key, byte[] data) {
         return generateMac(key, data, AES_CCM_MAC, true);
     }
 
@@ -94,13 +94,13 @@ public class MACUtil {
     public static void main(String[] args) {
         byte[] key = AESUtil.initKey(128);
 
-        byte[] sign1 = MACUtil.generateMacCMAC(key, "hello world!".getBytes(StandardCharsets.UTF_8));
+        byte[] sign1 = MACUtil.generateCMac(key, "hello world!".getBytes(StandardCharsets.UTF_8));
         System.out.println(Hex.toHexString(sign1));
 
-        byte[] sign2 = MACUtil.generateMacGMAC(key, "hello world!".getBytes(StandardCharsets.UTF_8));
+        byte[] sign2 = MACUtil.generateGMac(key, "hello world!".getBytes(StandardCharsets.UTF_8));
         System.out.println(Hex.toHexString(sign2));
 
-        byte[] sign3 = MACUtil.generateMacCCM(key, "hello world!".getBytes(StandardCharsets.UTF_8));
+        byte[] sign3 = MACUtil.generateCCMMac(key, "hello world!".getBytes(StandardCharsets.UTF_8));
         System.out.println(Hex.toHexString(sign3));
     }
 }

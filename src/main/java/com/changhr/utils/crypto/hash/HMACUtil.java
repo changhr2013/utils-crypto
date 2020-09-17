@@ -53,7 +53,7 @@ public abstract class HMACUtil {
      *
      * @return hex 格式的密钥
      */
-    public static String initHmacMD5KeyHex() {
+    public static String initHmacMD5HexKey() {
         return Hex.toHexString(initHmacMD5Key());
     }
 
@@ -62,7 +62,7 @@ public abstract class HMACUtil {
      *
      * @return base64 格式的密钥
      */
-    public static String initHmacMD5KeyBase64() {
+    public static String initHmacMD5Base64Key() {
         return Base64.getEncoder().encodeToString(initHmacMD5Key());
     }
 
@@ -115,7 +115,7 @@ public abstract class HMACUtil {
      *
      * @return hex 格式的密钥
      */
-    public static String initHmacSHA256KeyHex() {
+    public static String initHmacSHA256HexKey() {
         return Hex.toHexString(initHmacSHA256Key());
     }
 
@@ -124,7 +124,7 @@ public abstract class HMACUtil {
      *
      * @return base64 格式的密钥
      */
-    public static String initHmacSHA256KeyBase64() {
+    public static String initHmacSHA256Base64Key() {
         return Base64.getEncoder().encodeToString(initHmacSHA256Key());
     }
 
@@ -177,7 +177,7 @@ public abstract class HMACUtil {
      *
      * @return hex 格式密钥
      */
-    public static String initHmacSM3KeyHex() {
+    public static String initHmacSM3HexKey() {
         return Hex.toHexString(initHmacSM3Key());
     }
 
@@ -186,7 +186,7 @@ public abstract class HMACUtil {
      *
      * @return base64 格式密钥
      */
-    public static String initHmacSM3KeyBase64() {
+    public static String initHmacSM3Base64Key() {
         return Base64.getEncoder().encodeToString(initHmacSM3Key());
     }
 

@@ -14,16 +14,18 @@ import java.security.Signature;
 
 public class Signers {
 
+    static {
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+    }
+
+    public static final String BC = BouncyCastleProvider.PROVIDER_NAME;
+
     private static final byte[] SM2_ID = {
             (byte) 0x31, (byte) 0x32, (byte) 0x33, (byte) 0x34, (byte) 0x35, (byte) 0x36, (byte) 0x37, (byte) 0x38,
             (byte) 0x31, (byte) 0x32, (byte) 0x33, (byte) 0x34, (byte) 0x35, (byte) 0x36, (byte) 0x37, (byte) 0x38
     };
-
-    public static final String BC = BouncyCastleProvider.PROVIDER_NAME;
-
-    static {
-        Security.addProvider(new BouncyCastleProvider());
-    }
 
     public static byte[] RSASign(byte[] inData, PrivateKey privateKey) throws Exception {
         Signature signer = Signature.getInstance("SHA256WITHRSA", BC);
@@ -32,7 +34,7 @@ public class Signers {
         return signer.sign();
     }
 
-    public static boolean RSAVerifySign(byte[] inData, byte[] signature, PublicKey publicKey) throws Exception {
+    public static boolean RSAVerify(byte[] inData, byte[] signature, PublicKey publicKey) throws Exception {
         Signature signer = Signature.getInstance("SHA256WITHRSA", BC);
         signer.initVerify(publicKey);
         signer.update(inData);
@@ -47,7 +49,7 @@ public class Signers {
         return sm2Signer.generateSignature();
     }
 
-    public static boolean SM2VerifySign(byte[] inData, byte[] signature, PublicKey publicKey) throws Exception {
+    public static boolean SM2Verify(byte[] inData, byte[] signature, PublicKey publicKey) throws Exception {
         AsymmetricKeyParameter ecParam = ECUtil.generatePublicKeyParameter(publicKey);
         SM2Signer sm2Signer = new SM2Signer();
         sm2Signer.init(false, new ParametersWithID(ecParam, SM2_ID));
@@ -62,7 +64,7 @@ public class Signers {
         return signer.sign();
     }
 
-    public static boolean ECDSAVerifySign(byte[] inData, byte[] signature, PublicKey publicKey) throws Exception {
+    public static boolean ECDSAVerify(byte[] inData, byte[] signature, PublicKey publicKey) throws Exception {
         Signature signer = Signature.getInstance("SHA256WITHECDSA", BC);
         signer.initVerify(publicKey);
         signer.update(inData);

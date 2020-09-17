@@ -1,5 +1,6 @@
 package com.changhr.utils.crypto.symmetric;
 
+import com.changhr.utils.crypto.utils.PaddingUtil;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
 
@@ -68,7 +69,7 @@ public abstract class AESUtil {
     }
 
     /**
-     * 解密，默认为 ECB/PKCS5 模式
+     * 解密，默认为 ECB/PKCS5Padding 模式
      *
      * @param data 待解密数据
      * @param key  密钥
@@ -79,7 +80,7 @@ public abstract class AESUtil {
     }
 
     /**
-     * 解密，ECB 模式
+     * 解密
      *
      * @param data            待解密数据
      * @param key             密钥
@@ -90,52 +91,21 @@ public abstract class AESUtil {
         // 还原密钥
         Key k = toKey(key);
         try {
-            Cipher cipher = Cipher.getInstance(cipherAlgorithm);
+            Cipher cipher;
+            if (ECB_PKCS_7_PADDING.equals(cipherAlgorithm)) {
+                cipher = Cipher.getInstance(ECB_PKCS_7_PADDING, BouncyCastleProvider.PROVIDER_NAME);
+            } else {
+                cipher = Cipher.getInstance(cipherAlgorithm);
+            }
+
             // 初始化，设置为解密模式
             cipher.init(Cipher.DECRYPT_MODE, k);
 
             // 发现使用 NoPadding 时，使用 ZeroPadding 填充
             if (ECB_NO_PADDING.equals(cipherAlgorithm)) {
-                return removeZeroPadding(cipher.doFinal(data), cipher.getBlockSize());
+                return PaddingUtil.removeZeroPadding(cipher.doFinal(data), cipher.getBlockSize());
             }
 
-            // 执行操作
-            return cipher.doFinal(data);
-        } catch (Exception e) {
-            throw new RuntimeException("AES decrypt error", e);
-        }
-    }
-
-    private static byte[] removeZeroPadding(byte[] data, final int blockSize) {
-        final int length = data.length;
-        final int remainLength = length % blockSize;
-        if (remainLength == 0) {
-            // 解码后的数据正好是块大小的整数倍，说明可能存在补 0 的情况，去掉末尾所有的 0
-            int i = length - 1;
-            while (i >= 0 && 0 == data[i]) {
-                i--;
-            }
-            byte[] outputData = new byte[i + 1];
-            System.arraycopy(data, 0, outputData, 0, outputData.length);
-            return outputData;
-        }
-        return data;
-    }
-
-    /**
-     * 解密，ECB 模式，使用 BC 库 PKCS7Padding
-     *
-     * @param data 待解密数据
-     * @param key  密钥
-     * @return byte[] 解密的数据
-     */
-    public static byte[] decryptByPKCS7(byte[] data, byte[] key) {
-        // 还原密钥
-        Key k = toKey(key);
-        try {
-            Cipher cipher = Cipher.getInstance(ECB_PKCS_7_PADDING, BouncyCastleProvider.PROVIDER_NAME);
-            // 初始化，设置为解密模式
-            cipher.init(Cipher.DECRYPT_MODE, k);
             // 执行操作
             return cipher.doFinal(data);
         } catch (Exception e) {
@@ -149,15 +119,7 @@ public abstract class AESUtil {
      * @return byte[] 12 个随机字节
      */
     public static byte[] generateGCMNonce() {
-        SecureRandom random;
-        try {
-            random = SecureRandom.getInstanceStrong();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("no such algorithm exception");
-        }
-        byte[] nonce = new byte[96 / Byte.SIZE];
-        random.nextBytes(nonce);
-        return nonce;
+        return generateNonce(96 / Byte.SIZE);
     }
 
     /**
@@ -279,48 +241,20 @@ public abstract class AESUtil {
         // 还原密钥
         Key k = toKey(key);
         try {
-            Cipher cipher = Cipher.getInstance(cipherAlgorithm);
+            Cipher cipher;
+            if (ECB_PKCS_7_PADDING.equals(cipherAlgorithm)) {
+                cipher = Cipher.getInstance(ECB_PKCS_7_PADDING, BouncyCastleProvider.PROVIDER_NAME);
+            } else {
+                cipher = Cipher.getInstance(cipherAlgorithm);
+            }
             // 初始化，设置为加密模式
             cipher.init(Cipher.ENCRYPT_MODE, k);
 
             // 发现使用 NoPadding 时，使用 ZeroPadding 填充
             if (ECB_NO_PADDING.equals(cipherAlgorithm)) {
-                return cipher.doFinal(formatWithZeroPadding(data, cipher.getBlockSize()));
+                return cipher.doFinal(PaddingUtil.formatWithZeroPadding(data, cipher.getBlockSize()));
             }
 
-            // 执行操作
-            return cipher.doFinal(data);
-        } catch (Exception e) {
-            throw new RuntimeException("AES encrypt error", e);
-        }
-    }
-
-    private static byte[] formatWithZeroPadding(byte[] data, final int blockSize) {
-        final int length = data.length;
-        final int remainLength = length % blockSize;
-
-        if (remainLength > 0) {
-            byte[] inputData = new byte[length + blockSize - remainLength];
-            System.arraycopy(data, 0, inputData, 0, length);
-            return inputData;
-        }
-        return data;
-    }
-
-    /**
-     * 加密，ECB 模式，使用 BC 库 PKCS7Padding
-     *
-     * @param data 待加密数据
-     * @param key  密钥
-     * @return byte[] 加密的数据
-     */
-    public static byte[] encryptByPKCS7(byte[] data, byte[] key) {
-        // 还原密钥
-        Key k = toKey(key);
-        try {
-            Cipher cipher = Cipher.getInstance(ECB_PKCS_7_PADDING, BouncyCastleProvider.PROVIDER_NAME);
-            // 初始化，设置为加密模式
-            cipher.init(Cipher.ENCRYPT_MODE, k);
             // 执行操作
             return cipher.doFinal(data);
         } catch (Exception e) {
@@ -348,7 +282,7 @@ public abstract class AESUtil {
             cipher.init(Cipher.ENCRYPT_MODE, k, ivParameterSpec);
 
             if (CBC_NO_PADDING.equals(cipherAlgorithm)) {
-                data = formatWithZeroPadding(data, cipher.getBlockSize());
+                data = PaddingUtil.formatWithZeroPadding(data, cipher.getBlockSize());
             }
             byte[] decrypted = new byte[cipher.getOutputSize(data.length)];
 
@@ -389,7 +323,7 @@ public abstract class AESUtil {
             cipher.doFinal(decrypted, updateSize);
 
             if (CBC_NO_PADDING.equals(cipherAlgorithm)) {
-                decrypted = removeZeroPadding(decrypted, cipher.getBlockSize());
+                decrypted = PaddingUtil.removeZeroPadding(decrypted, cipher.getBlockSize());
             }
             return decrypted;
         } catch (Exception e) {
@@ -486,5 +420,13 @@ public abstract class AESUtil {
 
         byte[] decrypt5 = AESUtil.decrypt(encrypt5, key, iv5, AESUtil.CBC_NO_PADDING);
         System.out.println(new String(decrypt5, StandardCharsets.UTF_8));
+
+        System.out.println("========== AES-ECB-PKCS7Padding ==========");
+        byte[] iv6 = SecureRandom.getSeed(16);
+        byte[] encrypt6 = AESUtil.encrypt(data, key, AESUtil.ECB_PKCS_7_PADDING);
+        System.out.println(Hex.toHexString(encrypt6));
+
+        byte[] decrypt6 = AESUtil.decrypt(encrypt6, key, AESUtil.ECB_PKCS_7_PADDING);
+        System.out.println(new String(decrypt6, StandardCharsets.UTF_8));
     }
 }

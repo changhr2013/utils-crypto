@@ -127,11 +127,11 @@ public class CertUtils {
     public static boolean verifyCSR(PKCS10CertificationRequest csr) throws Exception {
         byte[] signature = csr.getSignature();
         if (csr.getSignatureAlgorithm().getAlgorithm().equals(GMObjectIdentifiers.sm2sign_with_sm3)) {
-            return Signers.SM2VerifySign(csr.toASN1Structure().getCertificationRequestInfo().getEncoded(ASN1Encoding.DER), signature, KeyUtils.getPublicKey(csr.getSubjectPublicKeyInfo()));
+            return Signers.SM2Verify(csr.toASN1Structure().getCertificationRequestInfo().getEncoded(ASN1Encoding.DER), signature, KeyUtils.getPublicKey(csr.getSubjectPublicKeyInfo()));
         } else if (csr.getSignatureAlgorithm().getAlgorithm().equals(X9ObjectIdentifiers.ecdsa_with_SHA256)) {
-            return Signers.ECDSAVerifySign(csr.toASN1Structure().getCertificationRequestInfo().getEncoded(ASN1Encoding.DER), signature, KeyUtils.getPublicKey(csr.getSubjectPublicKeyInfo()));
+            return Signers.ECDSAVerify(csr.toASN1Structure().getCertificationRequestInfo().getEncoded(ASN1Encoding.DER), signature, KeyUtils.getPublicKey(csr.getSubjectPublicKeyInfo()));
         } else if (csr.getSignatureAlgorithm().getAlgorithm().equals(PKCSObjectIdentifiers.sha256WithRSAEncryption)) {
-            return Signers.RSAVerifySign(csr.toASN1Structure().getCertificationRequestInfo().getEncoded(ASN1Encoding.DER), signature, KeyUtils.getPublicKey(csr.getSubjectPublicKeyInfo()));
+            return Signers.RSAVerify(csr.toASN1Structure().getCertificationRequestInfo().getEncoded(ASN1Encoding.DER), signature, KeyUtils.getPublicKey(csr.getSubjectPublicKeyInfo()));
         } else {
             throw new IllegalArgumentException("不支持的签名算法");
         }
