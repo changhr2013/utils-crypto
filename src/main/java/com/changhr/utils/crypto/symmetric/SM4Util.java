@@ -85,6 +85,14 @@ public abstract class SM4Util {
         return encrypt(keyBytes, plain, ECB_PKCS_5_PADDING);
     }
 
+    /**
+     * SM4 对称密钥加密
+     *
+     * @param keyBytes        SM4对称密钥
+     * @param plain           待加密数据
+     * @param cipherAlgorithm 加解密算法/工作模式/填充方式
+     * @return byte[]  加密后的数据
+     */
     public static byte[] encrypt(byte[] keyBytes, byte[] plain, final String cipherAlgorithm) {
         if (keyBytes.length != KEY_LENGTH) {
             throw new RuntimeException("error key length");
@@ -116,6 +124,14 @@ public abstract class SM4Util {
         return decrypt(keyBytes, cipher, ECB_PKCS_5_PADDING);
     }
 
+    /**
+     * SM4 对称密钥解密
+     *
+     * @param keyBytes        SM4 对称密钥
+     * @param cipher          待解密的数据
+     * @param cipherAlgorithm 加解密算法/工作模式/填充方式
+     * @return byte[]  解密后的数据
+     */
     public static byte[] decrypt(byte[] keyBytes, byte[] cipher, final String cipherAlgorithm) {
         if (keyBytes.length != KEY_LENGTH) {
             throw new RuntimeException("error key length");

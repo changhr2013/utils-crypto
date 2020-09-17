@@ -14,12 +14,23 @@ public class KeyUtils {
     public static final String BC = BouncyCastleProvider.PROVIDER_NAME;
 
     static {
-        Security.addProvider(new BouncyCastleProvider());
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
     }
 
-    public static KeyPair generateKeyPair(String algorithm) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException {
-        KeyPairGenerator keyPairGenerator;
+    /**
+     * 生成非对称算法密钥对
+     *
+     * @param algorithm 算法类型
+     * @return KeyPair
+     */
+    public static KeyPair generateKeyPair(String algorithm)
+            throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+
         SecureRandom random = new SecureRandom();
+
+        KeyPairGenerator keyPairGenerator;
         if ("RSA".equalsIgnoreCase(algorithm)) {
             keyPairGenerator = KeyPairGenerator.getInstance("RSA", BC);
             keyPairGenerator.initialize(2048, random);
@@ -34,6 +45,7 @@ public class KeyUtils {
         } else {
             throw new IllegalArgumentException("不支持的算法：" + algorithm);
         }
+
         return keyPairGenerator.generateKeyPair();
     }
 

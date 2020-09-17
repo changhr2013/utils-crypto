@@ -77,12 +77,12 @@ public abstract class SM2Util {
     /**
      * KeyMap 中公钥索引 KEY
      */
-    private static final String PUBLIC_KEY = "SM2PublicKey";
+    public static final String PUBLIC_KEY = "SM2PublicKey";
 
     /**
      * KeyMap 中私钥索引 KEY
      */
-    private static final String PRIVATE_KEY = "SM2PrivateKey";
+    public static final String PRIVATE_KEY = "SM2PrivateKey";
 
     /**
      * SM2 标准曲线
