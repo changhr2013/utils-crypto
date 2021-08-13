@@ -13,7 +13,7 @@
     <properties>
         <java.version>1.8</java.version>
         <project.encoding>UTF-8</project.encoding>
-        <bouncy-castle.version>1.61</bouncy-castle.version>
+        <bouncy-castle.version>1.67</bouncy-castle.version>
     </properties>
 
     <dependencies>
