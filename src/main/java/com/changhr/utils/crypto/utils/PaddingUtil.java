@@ -1,6 +1,8 @@
 package com.changhr.utils.crypto.utils;
 
 /**
+ * ZeroPadding 填充工具类
+ *
  * @author changhr
  * @create 2020-09-17 10:54
  */
@@ -9,6 +11,13 @@ public class PaddingUtil {
     private PaddingUtil() {
     }
 
+    /**
+     * 根据 blockSize 为 data 做 ZeroPadding 处理
+     *
+     * @param data      数据
+     * @param blockSize 块大小
+     * @return 使用 ZeroPadding 补足块大小整数倍的原始数据
+     */
     public static byte[] formatWithZeroPadding(byte[] data, final int blockSize) {
         final int length = data.length;
         final int remainLength = length % blockSize;
@@ -21,6 +30,13 @@ public class PaddingUtil {
         return data;
     }
 
+    /**
+     * 移除数据末尾的 ZeroPadding
+     *
+     * @param data      数据
+     * @param blockSize 块大小
+     * @return 移除 ZeroPadding 后的数据
+     */
     public static byte[] removeZeroPadding(byte[] data, final int blockSize) {
         final int length = data.length;
         final int remainLength = length % blockSize;

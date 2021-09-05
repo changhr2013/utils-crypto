@@ -1,5 +1,6 @@
 package com.changhr.utils.crypto.utils;
 
+import com.changhr.utils.crypto.provider.UnlimitedHolder;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
@@ -14,6 +15,7 @@ public class KeyUtils {
     public static final String BC = BouncyCastleProvider.PROVIDER_NAME;
 
     static {
+        UnlimitedHolder.init();
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
@@ -49,6 +51,12 @@ public class KeyUtils {
         return keyPairGenerator.generateKeyPair();
     }
 
+    /**
+     * 从公钥信息中获取公钥
+     *
+     * @param subjectPublicKeyInfo 公钥信息
+     * @return 公钥
+     */
     public static PublicKey getPublicKey(SubjectPublicKeyInfo subjectPublicKeyInfo) throws Exception {
         BouncyCastleProvider bouncyCastleProvider = ((BouncyCastleProvider) Security.getProvider(BC));
         bouncyCastleProvider.addKeyInfoConverter(PKCSObjectIdentifiers.rsaEncryption, new org.bouncycastle.jcajce.provider.asymmetric.rsa.KeyFactorySpi());

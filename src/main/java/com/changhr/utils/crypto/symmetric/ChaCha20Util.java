@@ -1,5 +1,6 @@
 package com.changhr.utils.crypto.symmetric;
 
+import com.changhr.utils.crypto.provider.UnlimitedHolder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
 
@@ -18,6 +19,7 @@ import java.security.*;
 public class ChaCha20Util {
 
     static {
+        UnlimitedHolder.init();
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
         }

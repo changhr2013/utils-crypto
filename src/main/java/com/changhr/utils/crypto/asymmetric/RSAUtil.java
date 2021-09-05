@@ -27,7 +27,6 @@ public abstract class RSAUtil {
     public static final String KEY_ALGORITHM = "RSA";
 
     public static final String ECB_NO_PADDING = "RSA/ECB/NoPadding";
-
     public static final String ECB_PKCS_1_PADDING = "RSA/ECB/PKCS1Padding";
 
     /**
@@ -54,13 +53,13 @@ public abstract class RSAUtil {
     /**
      * 签名
      *
-     * @param data   待签名数据
-     * @param priKey 私钥
+     * @param dataBytes       待签名数据
+     * @param privateKeyBytes 私钥
      * @return byte[] 数字签名
      */
-    public static byte[] sign(byte[] data, byte[] priKey) {
+    public static byte[] sign(byte[] dataBytes, byte[] privateKeyBytes) {
         // 转换私钥材料
-        PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(priKey);
+        PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
         try {
             // 实例化密钥工厂
             KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
@@ -71,7 +70,7 @@ public abstract class RSAUtil {
             // 初始化 Signature
             signature.initSign(privateKey);
             // 更新
-            signature.update(data);
+            signature.update(dataBytes);
             // 签名
             return signature.sign();
         } catch (Exception e) {
@@ -111,13 +110,13 @@ public abstract class RSAUtil {
     /**
      * 公钥加密
      *
-     * @param data   待加密数据
-     * @param pubKey 公钥
+     * @param plainBytes     待加密数据
+     * @param publicKeyBytes 公钥
      * @return byte[] 加密后的数据
      */
-    public static byte[] encrypt(byte[] data, byte[] pubKey, final String cipherAlgorithm) {
+    public static byte[] encrypt(byte[] plainBytes, byte[] publicKeyBytes, final String cipherAlgorithm) {
         // 获取公钥
-        X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(pubKey);
+        X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(publicKeyBytes);
         try {
             KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
             // 生成公钥
@@ -125,7 +124,7 @@ public abstract class RSAUtil {
             // 对数据解密
             Cipher cipher = Cipher.getInstance(cipherAlgorithm);
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-            return cipher.doFinal(data);
+            return cipher.doFinal(plainBytes);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -136,25 +135,25 @@ public abstract class RSAUtil {
      * 公钥加密
      * 默认使用 RSA/ECB/PKCS1Padding 方式
      *
-     * @param data   待加密数据
-     * @param pubKey 公钥
+     * @param plainBytes     待加密数据
+     * @param publicKeyBytes 公钥
      * @return byte[] 加密后的数据
      */
-    public static byte[] encrypt(byte[] data, byte[] pubKey) {
-        return encrypt(data, pubKey, ECB_PKCS_1_PADDING);
+    public static byte[] encrypt(byte[] plainBytes, byte[] publicKeyBytes) {
+        return encrypt(plainBytes, publicKeyBytes, ECB_PKCS_1_PADDING);
     }
 
     /**
      * 私钥解密
      *
-     * @param data   待解密数据
-     * @param priKey 私钥
+     * @param cipherBytes     待解密数据
+     * @param privateKeyBytes 私钥
      * @param cipherAlgorithm 算法/工作模式/填充方式
      * @return byte[] 解密数据
      */
-    public static byte[] decrypt(byte[] data, byte[] priKey, final String cipherAlgorithm) {
+    public static byte[] decrypt(byte[] cipherBytes, byte[] privateKeyBytes, final String cipherAlgorithm) {
         // 获取私钥
-        PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(priKey);
+        PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
         try {
             KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
             // 生成私钥
@@ -162,7 +161,7 @@ public abstract class RSAUtil {
             // 对数据解密
             Cipher cipher = Cipher.getInstance(cipherAlgorithm);
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
-            return cipher.doFinal(data);
+            return cipher.doFinal(cipherBytes);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -172,19 +171,19 @@ public abstract class RSAUtil {
      * 私钥解密
      * 默认使用 RSA/ECB/PKCS1Padding 方式
      *
-     * @param data   待解密数据
-     * @param priKey 私钥
+     * @param cipherBytes     待解密数据
+     * @param privateKeyBytes 私钥
      * @return byte[] 解密数据
      */
-    public static byte[] decrypt(byte[] data, byte[] priKey) {
-        return decrypt(data, priKey, ECB_PKCS_1_PADDING);
+    public static byte[] decrypt(byte[] cipherBytes, byte[] privateKeyBytes) {
+        return decrypt(cipherBytes, privateKeyBytes, ECB_PKCS_1_PADDING);
     }
 
     /**
      * 私钥加密
      *
-     * @param data   待加密数据
-     * @param pubKey 私钥
+     * @param data            待加密数据
+     * @param pubKey          私钥
      * @param cipherAlgorithm 算法/工作模式/填充方式
      * @return byte[] 加密后的数据
      */

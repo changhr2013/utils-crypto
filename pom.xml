@@ -13,7 +13,7 @@
     <properties>
         <java.version>1.8</java.version>
         <project.encoding>UTF-8</project.encoding>
-        <bouncy-castle.version>1.61</bouncy-castle.version>
+        <bouncy-castle.version>1.69</bouncy-castle.version>
     </properties>
 
     <dependencies>
@@ -30,9 +30,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.7.0</version>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

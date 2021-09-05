@@ -1,5 +1,6 @@
 package com.changhr.utils.crypto.hash;
 
+import com.changhr.utils.crypto.provider.UnlimitedHolder;
 import com.changhr.utils.crypto.symmetric.AESUtil;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
@@ -17,6 +18,7 @@ import java.security.*;
 public class MACUtil {
 
     static {
+        UnlimitedHolder.init();
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             BouncyCastleProvider provider = new BouncyCastleProvider();
             Security.addProvider(provider);

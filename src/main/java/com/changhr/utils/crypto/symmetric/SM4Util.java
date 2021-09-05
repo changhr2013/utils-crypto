@@ -1,6 +1,7 @@
 package com.changhr.utils.crypto.symmetric;
 
 import com.changhr.utils.crypto.asymmetric.SM2Util;
+import com.changhr.utils.crypto.provider.UnlimitedHolder;
 import com.changhr.utils.crypto.utils.PaddingUtil;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
@@ -26,6 +27,7 @@ import java.util.Map;
 public abstract class SM4Util {
 
     static {
+        UnlimitedHolder.init();
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
@@ -51,8 +53,14 @@ public abstract class SM4Util {
      * Java 7 支持 PKCS5Padding 填充方式
      * Bouncy Castle 支持 PKCS7Padding 填充方式
      */
-    public static final String ECB_PKCS_5_PADDING = "SM4/ECB/PKCS5Padding";
     public static final String ECB_NO_PADDING = "SM4/ECB/NoPadding";
+    public static final String ECB_PKCS_5_PADDING = "SM4/ECB/PKCS5Padding";
+
+    public static final String CBC_NO_PADDING = "SM4/CBC/NoPadding";
+    public static final String CBC_PKCS_5_PADDING = "SM4/CBC/PKCS5Padding";
+
+    public static final String CTR_NO_PADDING = "SM4/CTR/NoPadding";
+    public static final String GCM_NO_PADDING = "SM4/GCM/NoPadding";
 
     /**
      * 生成 SM4 对称密钥
@@ -77,23 +85,23 @@ public abstract class SM4Util {
     /**
      * SM4 对称密钥加密
      *
-     * @param keyBytes SM4对称密钥
-     * @param plain    待加密数据
+     * @param keyBytes   SM4对称密钥
+     * @param plainBytes 待加密数据
      * @return byte[]  加密后的数据
      */
-    public static byte[] encrypt(byte[] keyBytes, byte[] plain) {
-        return encrypt(keyBytes, plain, ECB_PKCS_5_PADDING);
+    public static byte[] encrypt(byte[] plainBytes, byte[] keyBytes) {
+        return encrypt(keyBytes, plainBytes, ECB_PKCS_5_PADDING);
     }
 
     /**
      * SM4 对称密钥加密
      *
      * @param keyBytes        SM4对称密钥
-     * @param plain           待加密数据
+     * @param plainBytes      待加密数据
      * @param cipherAlgorithm 加解密算法/工作模式/填充方式
      * @return byte[]  加密后的数据
      */
-    public static byte[] encrypt(byte[] keyBytes, byte[] plain, final String cipherAlgorithm) {
+    public static byte[] encrypt(byte[] plainBytes, byte[] keyBytes, final String cipherAlgorithm) {
         if (keyBytes.length != KEY_LENGTH) {
             throw new RuntimeException("error key length");
         }
@@ -102,12 +110,12 @@ public abstract class SM4Util {
             Cipher cipher = Cipher.getInstance(cipherAlgorithm, BouncyCastleProvider.PROVIDER_NAME);
             cipher.init(Cipher.ENCRYPT_MODE, key);
 
-            // 发现使用 NoPadding 时，使用 ZeroPadding 填充
-            if (ECB_NO_PADDING.equals(cipherAlgorithm)) {
-                return cipher.doFinal(PaddingUtil.formatWithZeroPadding(plain, cipher.getBlockSize()));
+            // 发现使用 ECB/CBC NoPadding 时，使用 ZeroPadding 填充
+            if (ECB_NO_PADDING.equalsIgnoreCase(cipherAlgorithm) || CBC_NO_PADDING.equalsIgnoreCase(cipherAlgorithm)) {
+                return cipher.doFinal(PaddingUtil.formatWithZeroPadding(plainBytes, cipher.getBlockSize()));
             }
 
-            return cipher.doFinal(plain);
+            return cipher.doFinal(plainBytes);
         } catch (Exception e) {
             throw new RuntimeException("sm4 encrypt error", e);
         }
@@ -128,11 +136,11 @@ public abstract class SM4Util {
      * SM4 对称密钥解密
      *
      * @param keyBytes        SM4 对称密钥
-     * @param cipher          待解密的数据
+     * @param cipherBytes     待解密的数据
      * @param cipherAlgorithm 加解密算法/工作模式/填充方式
      * @return byte[]  解密后的数据
      */
-    public static byte[] decrypt(byte[] keyBytes, byte[] cipher, final String cipherAlgorithm) {
+    public static byte[] decrypt(byte[] cipherBytes, byte[] keyBytes, final String cipherAlgorithm) {
         if (keyBytes.length != KEY_LENGTH) {
             throw new RuntimeException("error key length");
         }
@@ -143,10 +151,10 @@ public abstract class SM4Util {
 
             // 发现使用 NoPadding 时，使用 ZeroPadding 填充
             if (ECB_NO_PADDING.equals(cipherAlgorithm)) {
-                return PaddingUtil.removeZeroPadding(in.doFinal(cipher), in.getBlockSize());
+                return PaddingUtil.removeZeroPadding(in.doFinal(cipherBytes), in.getBlockSize());
             }
 
-            return in.doFinal(cipher);
+            return in.doFinal(cipherBytes);
         } catch (Exception e) {
             throw new RuntimeException("sm4 decrypt error", e);
         }

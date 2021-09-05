@@ -1,5 +1,6 @@
 package com.changhr.utils.crypto.symmetric;
 
+import com.changhr.utils.crypto.provider.UnlimitedHolder;
 import com.changhr.utils.crypto.utils.PaddingUtil;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
@@ -26,6 +27,7 @@ import java.security.Security;
 public abstract class AESUtil {
 
     static {
+        UnlimitedHolder.init();
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
         }
@@ -46,8 +48,8 @@ public abstract class AESUtil {
      * Java 7 支持 PKCS5Padding 填充方式
      * Bouncy Castle 支持 PKCS7Padding 填充方式
      */
-    public static final String CBC_PKCS_5_PADDING = "AES/CBC/PKCS5Padding";
     public static final String CBC_NO_PADDING = "AES/CBC/NoPadding";
+    public static final String CBC_PKCS_5_PADDING = "AES/CBC/PKCS5Padding";
 
     public static final String CTR_NO_PADDING = "AES/CTR/NoPadding";
     public static final String GCM_NO_PADDING = "AES/GCM/NoPadding";
@@ -160,6 +162,7 @@ public abstract class AESUtil {
             // 初始化，设置为解密模式
             cipher.init(Cipher.DECRYPT_MODE, k, gcmParameterSpec);
 
+            // 如果 aad 不为空，就设置 aad
             if (aad != null) {
                 cipher.updateAAD(aad);
             }

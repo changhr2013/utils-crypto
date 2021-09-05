@@ -1,5 +1,6 @@
 package com.changhr.utils.crypto.hash;
 
+import com.changhr.utils.crypto.provider.UnlimitedHolder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
 
@@ -19,6 +20,7 @@ import java.security.Security;
 public abstract class HASHUtil {
 
     static {
+        UnlimitedHolder.init();
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }

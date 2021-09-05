@@ -1,6 +1,6 @@
 package com.changhr.utils.crypto.hash;
 
-import com.changhr.utils.crypto.hash.sm3.SM3;
+import com.changhr.utils.crypto.provider.UnlimitedHolder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
 
@@ -8,12 +8,10 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Security;
-import java.util.Base64;
 
 /**
  * MAC 摘要算法工具类
@@ -25,10 +23,9 @@ import java.util.Base64;
 public abstract class HMACUtil {
 
     static {
+        UnlimitedHolder.init();
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            BouncyCastleProvider provider = new BouncyCastleProvider();
-            Security.addProvider(provider);
-            new SM3.Mappings().configure(provider);
+            Security.addProvider(new BouncyCastleProvider());
         }
     }
 
@@ -54,16 +51,7 @@ public abstract class HMACUtil {
      * @return hex 格式的密钥
      */
     public static String initHmacMD5HexKey() {
-        return Hex.toHexString(initHmacMD5Key());
-    }
-
-    /**
-     * 初始化 base64 形式的 HmacMD5 密钥
-     *
-     * @return base64 格式的密钥
-     */
-    public static String initHmacMD5Base64Key() {
-        return Base64.getEncoder().encodeToString(initHmacMD5Key());
+        return Hex.toHexString(initHmacKey(HMAC_MD5));
     }
 
     /**
@@ -77,28 +65,15 @@ public abstract class HMACUtil {
         return hmac(data, key, HMAC_MD5);
     }
 
+    /**
+     * HmacMD5 消息摘要
+     *
+     * @param data 待做摘要处理的数据
+     * @param key  密钥
+     * @return 消息摘要，hex 格式
+     */
     public static String MD5ToHex(byte[] data, byte[] key) {
-        return Hex.toHexString(MD5(data, key));
-    }
-
-    public static byte[] MD5WithHexKey(String text, String hexKey) {
-        byte[] data = text.getBytes(StandardCharsets.UTF_8);
-        byte[] key = Hex.decode(hexKey);
-        return MD5(data, key);
-    }
-
-    public static String MD5WithHexKeyToHex(String text, String hexKey) {
-        return Hex.toHexString(MD5WithHexKey(text, hexKey));
-    }
-
-    public static byte[] MD5WithBase64Key(String text, String base64Key) {
-        byte[] data = text.getBytes(StandardCharsets.UTF_8);
-        byte[] key = Base64.getDecoder().decode(base64Key);
-        return MD5(data, key);
-    }
-
-    public static String MD5WithBase64KeyToHex(String text, String base64Key) {
-        return Hex.toHexString(MD5WithBase64Key(text, base64Key));
+        return Hex.toHexString(hmac(data, key, HMAC_MD5));
     }
 
     /**
@@ -116,16 +91,7 @@ public abstract class HMACUtil {
      * @return hex 格式的密钥
      */
     public static String initHmacSHA256HexKey() {
-        return Hex.toHexString(initHmacSHA256Key());
-    }
-
-    /**
-     * 初始化 base64 形式的 HmacSHA256 密钥
-     *
-     * @return base64 格式的密钥
-     */
-    public static String initHmacSHA256Base64Key() {
-        return Base64.getEncoder().encodeToString(initHmacSHA256Key());
+        return Hex.toHexString(initHmacKey(HMAC_SHA256));
     }
 
     /**
@@ -140,27 +106,7 @@ public abstract class HMACUtil {
     }
 
     public static String SHA256ToHex(byte[] data, byte[] key) {
-        return Hex.toHexString(SHA256(data, key));
-    }
-
-    public static byte[] SHA256WithHexKey(String text, String hexKey) {
-        byte[] data = text.getBytes(StandardCharsets.UTF_8);
-        byte[] key = Hex.decode(hexKey);
-        return SHA256(data, key);
-    }
-
-    public static String SHA256WithHexKeyToHex(String text, String hexKey) {
-        return Hex.toHexString(SHA256WithHexKey(text, hexKey));
-    }
-
-    public static byte[] SHA256WithBase64Key(String text, String base64Key) {
-        byte[] data = text.getBytes(StandardCharsets.UTF_8);
-        byte[] key = Base64.getDecoder().decode(base64Key);
-        return SHA256(data, key);
-    }
-
-    public static String SHA256WithBase64KeyToHex(String text, String base64Key) {
-        return Hex.toHexString(SHA256WithBase64Key(text, base64Key));
+        return Hex.toHexString(hmac(data, key, HMAC_SHA256));
     }
 
     /**
@@ -178,16 +124,7 @@ public abstract class HMACUtil {
      * @return hex 格式密钥
      */
     public static String initHmacSM3HexKey() {
-        return Hex.toHexString(initHmacSM3Key());
-    }
-
-    /**
-     * 初始化 HmacSM3 密钥
-     *
-     * @return base64 格式密钥
-     */
-    public static String initHmacSM3Base64Key() {
-        return Base64.getEncoder().encodeToString(initHmacSM3Key());
+        return Hex.toHexString(initHmacKey(HMAC_SM3, BouncyCastleProvider.PROVIDER_NAME));
     }
 
     /**
@@ -209,55 +146,7 @@ public abstract class HMACUtil {
      * @return hex 格式的消息摘要
      */
     public static String SM3ToHex(byte[] data, byte[] key) {
-        return Hex.toHexString(SM3(data, key));
-    }
-
-    /**
-     * HmacSM3 消息摘要
-     *
-     * @param text   字符串格式的待摘要的数据
-     * @param hexKey hex 格式的密钥
-     * @return byte[] 消息摘要
-     */
-    public static byte[] SM3WithHexKey(String text, String hexKey) {
-        byte[] data = text.getBytes(StandardCharsets.UTF_8);
-        byte[] key = Hex.decode(hexKey);
-        return SM3(data, key);
-    }
-
-    /**
-     * HmacSM3 消息摘要
-     *
-     * @param text   字符串格式的待摘要的数据
-     * @param hexKey hex 格式的密钥
-     * @return hex 格式的消息摘要
-     */
-    public static String SM3WithHexKeyToHex(String text, String hexKey) {
-        return Hex.toHexString(SM3WithHexKey(text, hexKey));
-    }
-
-    /**
-     * HmacSM3 消息摘要
-     *
-     * @param text      字符串格式的待摘要的数据
-     * @param base64Key base64 格式的密钥
-     * @return byte[] 消息摘要
-     */
-    public static byte[] SM3WithBase64Key(String text, String base64Key) {
-        byte[] data = text.getBytes(StandardCharsets.UTF_8);
-        byte[] key = Base64.getDecoder().decode(base64Key);
-        return SM3(data, key);
-    }
-
-    /**
-     * HmacSM3 消息摘要
-     *
-     * @param text      字符串格式的待摘要的数据
-     * @param base64Key base64 格式的密钥
-     * @return hex 格式的消息摘要
-     */
-    public static String SM3WithBase64KeyToHex(String text, String base64Key) {
-        return Hex.toHexString(SM3WithBase64Key(text, base64Key));
+        return Hex.toHexString(hmac(data, key, HMAC_SM3, BouncyCastleProvider.PROVIDER_NAME));
     }
 
     /**

@@ -22,8 +22,21 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
 
+/**
+ * 证书相关的工具类
+ *
+ * @author changhr2013
+ */
 public class CertUtils {
 
+    /**
+     * 生成 CSR
+     *
+     * @param subject    X509Name
+     * @param publicKey  公钥
+     * @param privateKey 私钥
+     * @return CSR
+     */
     public static PKCS10CertificationRequest generateCSR(X500Name subject, PublicKey publicKey, PrivateKey privateKey) {
         try {
             SubjectPublicKeyInfo subjectPublicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.getEncoded());
@@ -46,7 +59,16 @@ public class CertUtils {
         }
     }
 
-    // 生成实体证书
+    /**
+     * 生成实体证书
+     *
+     * @param csr              CSR
+     * @param issuerPrivateKey 签发者私钥
+     * @param issuerCert       签发者证书
+     * @param notBefore        起始时间
+     * @param notAfter         结束时间
+     * @return 证书
+     */
     public static Certificate certGen(PKCS10CertificationRequest csr, PrivateKey issuerPrivateKey,
                                       byte[] issuerCert, Date notBefore, Date notAfter) throws Exception {
         X509CertificateHolder issuer = new X509CertificateHolder(issuerCert);
@@ -77,7 +99,15 @@ public class CertUtils {
         return assembleCert(tbs, issuer.getSubjectPublicKeyInfo(), issuerPrivateKey);
     }
 
-    // 生成自签名证书
+    /**
+     * 生成自签名证书
+     *
+     * @param subject   X500Name
+     * @param keyPair   密钥对
+     * @param notBefore 起始时间
+     * @param notAfter  结束时间
+     * @return 证书
+     */
     public static Certificate selfSignedCertGen(X500Name subject, KeyPair keyPair, Date notBefore, Date notAfter) throws Exception {
         SubjectPublicKeyInfo subjectPublicKeyInfo = SubjectPublicKeyInfo.getInstance(keyPair.getPublic().getEncoded());
         BcX509ExtensionUtils extUtils = new BcX509ExtensionUtils();
@@ -102,6 +132,14 @@ public class CertUtils {
         return assembleCert(tbs, subjectPublicKeyInfo, keyPair.getPrivate());
     }
 
+    /**
+     * 组装证书
+     *
+     * @param tbsCertificate             TBSCertificate
+     * @param issuerSubjectPublicKeyInfo 签发公钥信息
+     * @param issuerPrivateKey           签发者私钥
+     * @return 证书
+     */
     public static Certificate assembleCert(TBSCertificate tbsCertificate, SubjectPublicKeyInfo issuerSubjectPublicKeyInfo, PrivateKey issuerPrivateKey) throws Exception {
         byte[] signature;
         if ("ECDSA".equalsIgnoreCase(issuerPrivateKey.getAlgorithm())) {
@@ -124,6 +162,12 @@ public class CertUtils {
         return Certificate.getInstance(new DERSequence(v));
     }
 
+    /**
+     * 验证 CSR
+     *
+     * @param csr CSR
+     * @return boolean
+     */
     public static boolean verifyCSR(PKCS10CertificationRequest csr) throws Exception {
         byte[] signature = csr.getSignature();
         if (csr.getSignatureAlgorithm().getAlgorithm().equals(GMObjectIdentifiers.sm2sign_with_sm3)) {
@@ -137,14 +181,20 @@ public class CertUtils {
         }
     }
 
-    static AlgorithmIdentifier getSignAlgorithm(AlgorithmIdentifier asymAlgo) {
+    /**
+     * 获取签名算法标识
+     *
+     * @param algorithmIdentifier 算法 Oid 标识
+     * @return AlgorithmIdentifier
+     */
+    static AlgorithmIdentifier getSignAlgorithm(AlgorithmIdentifier algorithmIdentifier) {
         // 根据公钥算法标识返回对应签名算法标识
-        if (asymAlgo.getAlgorithm().equals(X9ObjectIdentifiers.id_ecPublicKey)
-                && asymAlgo.getParameters().equals(GMObjectIdentifiers.sm2p256v1)) {
+        if (algorithmIdentifier.getAlgorithm().equals(X9ObjectIdentifiers.id_ecPublicKey)
+                && algorithmIdentifier.getParameters().equals(GMObjectIdentifiers.sm2p256v1)) {
             return new AlgorithmIdentifier(GMObjectIdentifiers.sm2sign_with_sm3, DERNull.INSTANCE);
-        } else if (asymAlgo.getAlgorithm().equals(X9ObjectIdentifiers.id_ecPublicKey) && asymAlgo.getParameters().equals(SECObjectIdentifiers.secp256k1)) {
+        } else if (algorithmIdentifier.getAlgorithm().equals(X9ObjectIdentifiers.id_ecPublicKey) && algorithmIdentifier.getParameters().equals(SECObjectIdentifiers.secp256k1)) {
             return new AlgorithmIdentifier(X9ObjectIdentifiers.ecdsa_with_SHA256);
-        } else if (asymAlgo.getAlgorithm().equals(PKCSObjectIdentifiers.rsaEncryption)) {
+        } else if (algorithmIdentifier.getAlgorithm().equals(PKCSObjectIdentifiers.rsaEncryption)) {
             return new AlgorithmIdentifier(PKCSObjectIdentifiers.sha256WithRSAEncryption, DERNull.INSTANCE);
         } else {
             throw new IllegalArgumentException("密钥算法不支持");
