@@ -1,21 +1,17 @@
 package com.changhr.utils.crypto.symmetric;
 
-import com.changhr.utils.crypto.asymmetric.SM2Util;
 import com.changhr.utils.crypto.provider.UnlimitedHolder;
 import com.changhr.utils.crypto.utils.PaddingUtil;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.util.encoders.Hex;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Security;
-import java.util.Map;
 
 /**
  * 国密 SM4 对称加密算法工具类
@@ -160,20 +156,4 @@ public abstract class SM4Util {
         }
     }
 
-    public static void main(String[] args) {
-
-        byte[] data = "hello world!".getBytes(StandardCharsets.UTF_8);
-
-        Map<String, Object> keyMap = SM2Util.initKey();
-        byte[] sm2PrivateKey = SM2Util.getSwapPrivateKey(keyMap);
-        System.out.println(Hex.toHexString(sm2PrivateKey));
-
-        byte[] sm4Key = SM4Util.initKey();
-
-        byte[] encrypt = SM4Util.encrypt(sm4Key, sm2PrivateKey, ECB_NO_PADDING);
-        System.out.println(Hex.toHexString(encrypt));
-
-        byte[] decrypt = SM4Util.decrypt(sm4Key, encrypt, ECB_NO_PADDING);
-        System.out.println(Hex.toHexString(decrypt));
-    }
 }
