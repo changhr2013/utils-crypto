@@ -42,7 +42,7 @@ public class PemUtilTest {
                 "L9GsgiZ5vGMrmkyWshid0c9B8csM6Pe0NZJHm6z/NkK8MmqBNrQ=\n" +
                 "-----END RSA PRIVATE KEY-----";
 
-        PrivateKey privateKey = PemUtil.readPemPrivateKey(new ByteArrayInputStream(pemPrivateKey.getBytes(StandardCharsets.UTF_8)));
+        PrivateKey privateKey = PemUtil.readPemPrivateKey(pemPrivateKey.getBytes(StandardCharsets.UTF_8));
         System.out.println(privateKey.getAlgorithm());
         System.out.println(privateKey.getFormat());
         System.out.println(Hex.toHexString(privateKey.getEncoded()));
@@ -72,7 +72,7 @@ public class PemUtilTest {
                 "SwZTTBW1OGoP2EXdSRfNP2HmG4GjFQu5Sq5jp5F1d7lcDgLgUDErhugb\n" +
                 "-----END CERTIFICATE-----";
 
-        PublicKey publicKey = PemUtil.readPemPublicKey(new ByteArrayInputStream(pemCert.getBytes(StandardCharsets.UTF_8)));
+        PublicKey publicKey = PemUtil.readPemPublicKey(pemCert.getBytes(StandardCharsets.UTF_8));
         System.out.println(publicKey.getAlgorithm());
         System.out.println(publicKey.getFormat());
         System.out.println(Hex.toHexString(publicKey.getEncoded()));
@@ -82,7 +82,7 @@ public class PemUtilTest {
                 "AYItoUQDQgAE3LRuqCM697gL3jPhw98eGfTDcJsuJr6H1nE4VkgdtBdX3So2lC6m\n" +
                 "UGEnWeRZuh8HnzCRobcu02Bgv7CVR5Iigg==\n" +
                 "-----END EC PRIVATE KEY-----";
-        PrivateKey sm2PrivateKey = PemUtil.readPemPrivateKey(new ByteArrayInputStream(sm2PemPrivateKey.getBytes(StandardCharsets.UTF_8)));
+        PrivateKey sm2PrivateKey = PemUtil.readPemPrivateKey(sm2PemPrivateKey.getBytes(StandardCharsets.UTF_8));
         System.out.println(sm2PrivateKey.getAlgorithm());
         System.out.println(sm2PrivateKey.getFormat());
         System.out.println(Hex.toHexString(sm2PrivateKey.getEncoded()));
@@ -97,7 +97,7 @@ public class PemUtilTest {
                 "h+mnbZmx7ZhLInWB1FeLtQZ+VWcfNPK7I7wCIHawHN4PoYc2lIYrpIJZQqJXYsRP\n" +
                 "63c5qoeXApObdkTn\n" +
                 "-----END CERTIFICATE REQUEST-----";
-        PublicKey csrPublicKey = PemUtil.readPemPublicKey(new ByteArrayInputStream(eccPemCsr.getBytes(StandardCharsets.UTF_8)));
+        PublicKey csrPublicKey = PemUtil.readPemPublicKey(eccPemCsr.getBytes(StandardCharsets.UTF_8));
         System.out.println(csrPublicKey.getAlgorithm());
         System.out.println(csrPublicKey.getFormat());
         System.out.println(Hex.toHexString(csrPublicKey.getEncoded()));
