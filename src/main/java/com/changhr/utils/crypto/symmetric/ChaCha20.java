@@ -1,25 +1,24 @@
 package com.changhr.utils.crypto.symmetric;
 
-import com.changhr.utils.crypto.provider.UnlimitedHolder;
+import com.changhr.utils.crypto.utils.RandomUtil;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.util.encoders.Hex;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 
 /**
- * @author changhr
+ * ChaCha20 加解密工具类
+ *
+ * @author changhr2013
  * @create 2020-04-27 11:41
  */
-public class ChaCha20Util {
+public class ChaCha20 {
 
     static {
-        UnlimitedHolder.init();
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
         }
@@ -79,34 +78,27 @@ public class ChaCha20Util {
      * @return byte[]，8 个字节
      */
     public static byte[] generateIv() {
-        SecureRandom random;
-        try {
-            random = SecureRandom.getInstanceStrong();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("no such algorithm exception.", e);
-        }
-        byte[] nonce = new byte[8];
-        random.nextBytes(nonce);
-        return nonce;
+        return RandomUtil.generateNonce(8);
     }
 
     /**
      * ChaCha20 对称密钥加密
      *
-     * @param keyBytes ChaCha20 对称密钥
-     * @param plain    待加密数据
+     * @param plainBytes 待加密数据
+     * @param keyBytes   ChaCha20 对称密钥
+     * @param ivBytes    向量
      * @return byte[]  加密后的数据
      */
-    public static byte[] encrypt(byte[] keyBytes, byte[] plain, byte[] iv) {
+    public static byte[] encrypt(byte[] plainBytes, byte[] keyBytes, byte[] ivBytes) {
         if (keyBytes.length != DEFAULT_KEY_SIZE / Byte.SIZE && keyBytes.length != 256 / Byte.SIZE) {
             throw new RuntimeException("error key length");
         }
         try {
             Key key = new SecretKeySpec(keyBytes, KEY_ALGORITHM);
-            IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+            IvParameterSpec ivParameterSpec = new IvParameterSpec(ivBytes);
             Cipher out = Cipher.getInstance(CIPHER_ALGORITHM, BouncyCastleProvider.PROVIDER_NAME);
             out.init(Cipher.ENCRYPT_MODE, key, ivParameterSpec);
-            return out.doFinal(plain);
+            return out.doFinal(plainBytes);
         } catch (Exception e) {
             throw new RuntimeException("chacha20 encrypt error", e);
         }
@@ -115,39 +107,24 @@ public class ChaCha20Util {
     /**
      * ChaCha20 对称密钥解密
      *
-     * @param keyBytes ChaCha20 对称密钥
-     * @param cipher   待解密的数据
+     * @param keyBytes    ChaCha20 对称密钥
+     * @param cipherBytes 待解密的数据
+     * @param ivBytes     向量
      * @return byte[]  解密后的数据
      */
-    public static byte[] decrypt(byte[] keyBytes, byte[] cipher, byte[] iv) {
+    public static byte[] decrypt(byte[] cipherBytes, byte[] keyBytes, byte[] ivBytes) {
         if (keyBytes.length != DEFAULT_KEY_SIZE / Byte.SIZE && keyBytes.length != 256 / Byte.SIZE) {
             throw new RuntimeException("error key length");
         }
         try {
             Key key = new SecretKeySpec(keyBytes, KEY_ALGORITHM);
             Cipher in = Cipher.getInstance(CIPHER_ALGORITHM, BouncyCastleProvider.PROVIDER_NAME);
-            IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+            IvParameterSpec ivParameterSpec = new IvParameterSpec(ivBytes);
             in.init(Cipher.DECRYPT_MODE, key, ivParameterSpec);
-            return in.doFinal(cipher);
+            return in.doFinal(cipherBytes);
         } catch (Exception e) {
             throw new RuntimeException("chacha20 decrypt error", e);
         }
-    }
-
-    public static void main(String[] args) {
-
-        byte[] key = initKey();
-        byte[] iv = generateIv();
-        System.out.println("key: " + Hex.toHexString(key));
-        System.out.println("iv: " + Hex.toHexString(iv));
-
-        byte[] data = "helloworld".getBytes(StandardCharsets.UTF_8);
-
-        byte[] encryptData = encrypt(key, data, iv);
-        System.out.println("encrypt: " + Hex.toHexString(encryptData));
-
-        byte[] decryptData = decrypt(key, encryptData, iv);
-        System.out.println("decrypt: " + new String(decryptData, StandardCharsets.UTF_8));
     }
 
 }

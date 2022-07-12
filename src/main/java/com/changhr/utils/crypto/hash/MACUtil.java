@@ -1,14 +1,11 @@
 package com.changhr.utils.crypto.hash;
 
-import com.changhr.utils.crypto.provider.UnlimitedHolder;
-import com.changhr.utils.crypto.symmetric.AESUtil;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 
 /**
@@ -18,10 +15,8 @@ import java.security.*;
 public class MACUtil {
 
     static {
-        UnlimitedHolder.init();
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            BouncyCastleProvider provider = new BouncyCastleProvider();
-            Security.addProvider(provider);
+            Security.addProvider(new BouncyCastleProvider());
         }
     }
 
@@ -87,22 +82,11 @@ public class MACUtil {
             } else {
                 mac.init(k);
             }
-        } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException | InvalidAlgorithmParameterException e) {
+        } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException |
+                 InvalidAlgorithmParameterException e) {
             throw new RuntimeException(e);
         }
         return mac.doFinal(data);
     }
 
-    public static void main(String[] args) {
-        byte[] key = AESUtil.initKey(128);
-
-        byte[] sign1 = MACUtil.generateCMac(key, "hello world!".getBytes(StandardCharsets.UTF_8));
-        System.out.println(Hex.toHexString(sign1));
-
-        byte[] sign2 = MACUtil.generateGMac(key, "hello world!".getBytes(StandardCharsets.UTF_8));
-        System.out.println(Hex.toHexString(sign2));
-
-        byte[] sign3 = MACUtil.generateCCMMac(key, "hello world!".getBytes(StandardCharsets.UTF_8));
-        System.out.println(Hex.toHexString(sign3));
-    }
 }
