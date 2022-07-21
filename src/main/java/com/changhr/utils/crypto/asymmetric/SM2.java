@@ -692,7 +692,7 @@ public abstract class SM2 {
      * @param swapPrivateKey 交换私钥（D 分量字节数组）
      * @return {@link BCECPrivateKey} 完整的私钥
      */
-    private static PrivateKey buildPrivateKey(byte[] swapPrivateKey) {
+    public static PrivateKey buildPrivateKey(byte[] swapPrivateKey) {
         BigInteger d = new BigInteger(1, swapPrivateKey);
         ECPrivateKeySpec ecPrivateKeySpec = new ECPrivateKeySpec(d, SM2_PARAMETER_SPEC);
         return new BCECPrivateKey(KEY_ALGORITHM, ecPrivateKeySpec, BouncyCastleProvider.CONFIGURATION);
@@ -704,7 +704,7 @@ public abstract class SM2 {
      * @param swapPublicKey 交换公钥的字节数组（标志位 + 点）
      * @return {@link BCECPublicKey} 完整的公钥
      */
-    private static PublicKey buildPublicKey(byte[] swapPublicKey) {
+    public static PublicKey buildPublicKey(byte[] swapPublicKey) {
         ECPoint ecPoint = SM2_X9_EC_PARAMETERS.getCurve().decodePoint(swapPublicKey);
         ECPublicKeySpec ecPublicKeySpec = new ECPublicKeySpec(ecPoint, SM2_PARAMETER_SPEC);
         return new BCECPublicKey(KEY_ALGORITHM, ecPublicKeySpec, BouncyCastleProvider.CONFIGURATION);
@@ -716,7 +716,7 @@ public abstract class SM2 {
      * @param privateKey {@link BCECPrivateKey} 完整的私钥
      * @return 交换私钥（D 分量字节数组）
      */
-    private static byte[] extractSwapPrivateKey(PrivateKey privateKey) {
+    public static byte[] extractSwapPrivateKey(PrivateKey privateKey) {
         return BigIntegers.asUnsignedByteArray(32, ((BCECPrivateKey) privateKey).getD());
     }
 
@@ -726,7 +726,7 @@ public abstract class SM2 {
      * @param publicKey {@link BCECPublicKey} 完整的公钥
      * @return 交换公钥的字节数组（标志位 + 点）
      */
-    private static byte[] extractSwapPublicKey(PublicKey publicKey) {
+    public static byte[] extractSwapPublicKey(PublicKey publicKey) {
         return ((BCECPublicKey) publicKey).getQ().getEncoded(false);
     }
 
@@ -737,7 +737,7 @@ public abstract class SM2 {
      * @param compressed 是否进行压缩
      * @return 交换公钥的字节数组（标志位 + 点）
      */
-    private static byte[] extractSwapPublicKey(PublicKey publicKey, boolean compressed) {
+    public static byte[] extractSwapPublicKey(PublicKey publicKey, boolean compressed) {
         return ((BCECPublicKey) publicKey).getQ().getEncoded(compressed);
     }
 
