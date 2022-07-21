@@ -9,7 +9,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.*;
 
 /**
- * @author changhr
+ * @author changhr2013
  * @create 2019-10-15 14:14
  */
 public class MACUtil {

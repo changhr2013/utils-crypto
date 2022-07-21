@@ -17,10 +17,10 @@ public class FPEFF1 {
     /**
      * FPE FF1 基础加密，PRF 使用 AES 算法
      *
-     * @param plainBytes  明文，byte[] 格式
-     * @param keyBytes    加密使用的密钥，byte[] 格式
-     * @param tWeak       tWeak
-     * @param radix       基数
+     * @param plainBytes 明文，byte[] 格式
+     * @param keyBytes   加密使用的密钥，byte[] 格式
+     * @param tWeak      tWeak
+     * @param radix      基数
      * @return 密文，byte[] 格式
      */
     public static byte[] encrypt(byte[] plainBytes, byte[] keyBytes, byte[] tWeak, int radix) {

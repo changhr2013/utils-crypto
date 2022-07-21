@@ -1,6 +1,6 @@
 package com.changhr.utils.crypto.cert;
 
-import com.changhr.utils.crypto.utils.KeyUtils;
+import com.changhr.utils.crypto.utils.KeyUtil;
 import com.changhr.utils.crypto.utils.Signers;
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.gm.GMObjectIdentifiers;
@@ -171,11 +171,11 @@ public class CertUtils {
     public static boolean verifyCSR(PKCS10CertificationRequest csr) throws Exception {
         byte[] signature = csr.getSignature();
         if (csr.getSignatureAlgorithm().getAlgorithm().equals(GMObjectIdentifiers.sm2sign_with_sm3)) {
-            return Signers.SM2Verify(csr.toASN1Structure().getCertificationRequestInfo().getEncoded(ASN1Encoding.DER), signature, KeyUtils.getPublicKey(csr.getSubjectPublicKeyInfo()));
+            return Signers.SM2Verify(csr.toASN1Structure().getCertificationRequestInfo().getEncoded(ASN1Encoding.DER), signature, KeyUtil.getPublicKey(csr.getSubjectPublicKeyInfo()));
         } else if (csr.getSignatureAlgorithm().getAlgorithm().equals(X9ObjectIdentifiers.ecdsa_with_SHA256)) {
-            return Signers.ECDSAVerify(csr.toASN1Structure().getCertificationRequestInfo().getEncoded(ASN1Encoding.DER), signature, KeyUtils.getPublicKey(csr.getSubjectPublicKeyInfo()));
+            return Signers.ECDSAVerify(csr.toASN1Structure().getCertificationRequestInfo().getEncoded(ASN1Encoding.DER), signature, KeyUtil.getPublicKey(csr.getSubjectPublicKeyInfo()));
         } else if (csr.getSignatureAlgorithm().getAlgorithm().equals(PKCSObjectIdentifiers.sha256WithRSAEncryption)) {
-            return Signers.RSAVerify(csr.toASN1Structure().getCertificationRequestInfo().getEncoded(ASN1Encoding.DER), signature, KeyUtils.getPublicKey(csr.getSubjectPublicKeyInfo()));
+            return Signers.RSAVerify(csr.toASN1Structure().getCertificationRequestInfo().getEncoded(ASN1Encoding.DER), signature, KeyUtil.getPublicKey(csr.getSubjectPublicKeyInfo()));
         } else {
             throw new IllegalArgumentException("不支持的签名算法");
         }

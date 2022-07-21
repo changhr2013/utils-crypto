@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * 反射开启无限制政策
- * 代码参考自：https://stackoverflow.com/questions/1179672/how-to-avoid-installing-unlimited-strength-jce-policy-files-when-deploying-an
+ * 代码参考自：<a href="https://stackoverflow.com/questions/1179672/how-to-avoid-installing-unlimited-strength-jce-policy-files-when-deploying-an">installing unlimited strength jce policy</a>
  *
  * @author changhr2013
  * @date 2021/9/5

@@ -7,7 +7,7 @@ import org.bouncycastle.crypto.KeyGenerationParameters;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * 国密 SM4 对称加密算法工具类
+ * 国密 SM4 对称加/解密算法工具类
  *
  * @author changhr2013
  * @create 2019-05-08 10:21

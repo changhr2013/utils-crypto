@@ -1,6 +1,5 @@
 package com.changhr.utils.crypto.hash;
 
-import com.changhr.utils.crypto.provider.UnlimitedHolder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
 
@@ -13,14 +12,13 @@ import java.security.Security;
 /**
  * hash 摘要算法工具类
  *
- * @author changhr
+ * @author changhr2013
  * @create 2019-05-08 12:45
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
-public abstract class HASHUtil {
+@SuppressWarnings({"WeakerAccess"})
+public abstract class HASH {
 
     static {
-        UnlimitedHolder.init();
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
@@ -47,17 +45,6 @@ public abstract class HASHUtil {
     /**
      * MD5 消息摘要
      *
-     * @param text 待 hash 的文本，默认使用 UTF-8 编码
-     * @return byte[] 消息摘要
-     */
-    public static byte[] MD5(String text) {
-        byte[] data = text.getBytes(StandardCharsets.UTF_8);
-        return MD5(data);
-    }
-
-    /**
-     * MD5 消息摘要
-     *
      * @param data 待做摘要处理的数据
      * @return md5 hash 值，Hex 字符串
      */
@@ -72,7 +59,7 @@ public abstract class HASHUtil {
      * @return md5 hash 值，Hex 字符串
      */
     public static String MD5Hex(String text) {
-        return Hex.toHexString(MD5(text));
+        return Hex.toHexString(MD5(text.getBytes(StandardCharsets.UTF_8)));
     }
 
     /**
@@ -83,17 +70,6 @@ public abstract class HASHUtil {
      */
     public static byte[] SHA1(byte[] data) {
         return hash(data, HASH_SHA1);
-    }
-
-    /**
-     * SHA-1 消息摘要
-     *
-     * @param text 待 hash 的文本，默认使用 UTF-8 编码
-     * @return byte[] 消息摘要
-     */
-    public static byte[] SHA1(String text) {
-        byte[] data = text.getBytes(StandardCharsets.UTF_8);
-        return SHA1(data);
     }
 
     /**
@@ -113,7 +89,7 @@ public abstract class HASHUtil {
      * @return sha1 hash 值，Hex 字符串
      */
     public static String SHA1Hex(String text) {
-        return Hex.toHexString(SHA1(text));
+        return Hex.toHexString(SHA1(text.getBytes(StandardCharsets.UTF_8)));
     }
 
     /**
@@ -124,17 +100,6 @@ public abstract class HASHUtil {
      */
     public static byte[] SHA256(byte[] data) {
         return hash(data, HASH_SHA256);
-    }
-
-    /**
-     * SHA-256 消息摘要
-     *
-     * @param text 待 hash 的文本，默认使用 UTF-8 编码
-     * @return byte[] 消息摘要
-     */
-    public static byte[] SHA256(String text) {
-        byte[] data = text.getBytes(StandardCharsets.UTF_8);
-        return SHA256(data);
     }
 
     /**
@@ -154,7 +119,7 @@ public abstract class HASHUtil {
      * @return sha256 hash 值，Hex 字符串
      */
     public static String SHA256Hex(String text) {
-        return Hex.toHexString(SHA256(text));
+        return Hex.toHexString(SHA256(text.getBytes(StandardCharsets.UTF_8)));
     }
 
     /**
@@ -165,17 +130,6 @@ public abstract class HASHUtil {
      */
     public static byte[] SM3(byte[] data) {
         return hash(data, HASH_SM3, BouncyCastleProvider.PROVIDER_NAME);
-    }
-
-    /**
-     * SM3 消息摘要
-     *
-     * @param text 待 hash 的文本，默认使用 UTF-8 编码
-     * @return byte[] sm3 hash 值
-     */
-    public static byte[] SM3(String text) {
-        byte[] data = text.getBytes(StandardCharsets.UTF_8);
-        return SM3(data);
     }
 
     /**
@@ -195,7 +149,7 @@ public abstract class HASHUtil {
      * @return sm3 hash 值，Hex 字符串
      */
     public static String SM3Hex(String text) {
-        return Hex.toHexString(SM3(text));
+        return Hex.toHexString(SM3(text.getBytes(StandardCharsets.UTF_8)));
     }
 
     /**

@@ -25,8 +25,6 @@ public class Signers {
         }
     }
 
-    public static final String BC = BouncyCastleProvider.PROVIDER_NAME;
-
     /**
      * SM2 算法推荐的默认 ID
      */
@@ -43,7 +41,7 @@ public class Signers {
      * @return 签名
      */
     public static byte[] RSASign(byte[] inData, PrivateKey privateKey) throws Exception {
-        Signature signer = Signature.getInstance("SHA256WITHRSA", BC);
+        Signature signer = Signature.getInstance("SHA256WITHRSA", BouncyCastleProvider.PROVIDER_NAME);
         signer.initSign(privateKey);
         signer.update(inData);
         return signer.sign();
@@ -58,7 +56,7 @@ public class Signers {
      * @return boolean 验签结果
      */
     public static boolean RSAVerify(byte[] inData, byte[] signature, PublicKey publicKey) throws Exception {
-        Signature signer = Signature.getInstance("SHA256WITHRSA", BC);
+        Signature signer = Signature.getInstance("SHA256WITHRSA", BouncyCastleProvider.PROVIDER_NAME);
         signer.initVerify(publicKey);
         signer.update(inData);
         return signer.verify(signature);
@@ -103,7 +101,7 @@ public class Signers {
      * @return 签名
      */
     public static byte[] ECDSASign(byte[] inData, PrivateKey privateKey) throws Exception {
-        Signature signer = Signature.getInstance("SHA256WITHECDSA", BC);
+        Signature signer = Signature.getInstance("SHA256WITHECDSA", BouncyCastleProvider.PROVIDER_NAME);
         signer.initSign(privateKey);
         signer.update(inData);
         return signer.sign();
@@ -118,7 +116,7 @@ public class Signers {
      * @return boolean，验签结果
      */
     public static boolean ECDSAVerify(byte[] inData, byte[] signature, PublicKey publicKey) throws Exception {
-        Signature signer = Signature.getInstance("SHA256WITHECDSA", BC);
+        Signature signer = Signature.getInstance("SHA256WITHECDSA", BouncyCastleProvider.PROVIDER_NAME);
         signer.initVerify(publicKey);
         signer.update(inData);
         return signer.verify(signature);

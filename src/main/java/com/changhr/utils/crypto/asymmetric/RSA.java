@@ -1,12 +1,7 @@
 package com.changhr.utils.crypto.asymmetric;
 
-import org.bouncycastle.util.encoders.Hex;
-
 import javax.crypto.Cipher;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
@@ -15,11 +10,10 @@ import java.util.Map;
 /**
  * RSA 非对称加密算法工具类
  *
- * @author changhr
+ * @author changhr2013
  * @create 2019-05-08 14:52
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
-public abstract class RSAUtil {
+public abstract class RSA {
 
     /**
      * 密钥算法类型
@@ -279,7 +273,7 @@ public abstract class RSAUtil {
      *
      * @return 密钥 Map
      */
-    public static Map<String, Object> initKey() {
+    public static Map<String, Key> initKey() {
         return initKey(KEY_SIZE);
     }
 
@@ -289,7 +283,17 @@ public abstract class RSAUtil {
      * @param keySize 密钥长度
      * @return 密钥 Map
      */
-    public static Map<String, Object> initKey(int keySize) {
+    public static Map<String, Key> initKey(int keySize) {
+        // 生成密钥对
+        KeyPair keyPair = initKeyPair(keySize);
+        // 封装密钥 Map
+        Map<String, Key> keyMap = new HashMap<>(2);
+        keyMap.put(PUBLIC_KEY, keyPair.getPublic());
+        keyMap.put(PRIVATE_KEY, keyPair.getPrivate());
+        return keyMap;
+    }
+
+    public static KeyPair initKeyPair(int keySize) {
         // 实例化密钥对生成器
         KeyPairGenerator keyPairGen;
         try {
@@ -300,29 +304,7 @@ public abstract class RSAUtil {
         // 初始化密钥对生成器
         keyPairGen.initialize(keySize);
         // 生成密钥对
-        KeyPair keyPair = keyPairGen.generateKeyPair();
-        // 公钥
-        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-        // 私钥
-        RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-        // 封装密钥
-        Map<String, Object> keyMap = new HashMap<>(2);
-        keyMap.put(PUBLIC_KEY, publicKey);
-        keyMap.put(PRIVATE_KEY, privateKey);
-        return keyMap;
+        return keyPairGen.generateKeyPair();
     }
 
-    public static void main(String[] args) {
-        byte[] test = "hello".getBytes(StandardCharsets.UTF_8);
-        Map<String, Object> keyMap = RSAUtil.initKey(512);
-        byte[] privateKey = RSAUtil.getPrivateKey(keyMap);
-        byte[] publicKey = RSAUtil.getPublicKey(keyMap);
-
-        byte[] bytes = RSAUtil.encryptByPrivateKey(test, privateKey);
-        System.out.println(Hex.toHexString(bytes));
-
-        byte[] decrypt = RSAUtil.decryptByPublicKey(bytes, publicKey);
-
-        System.out.println(new String(decrypt, StandardCharsets.UTF_8));
-    }
 }

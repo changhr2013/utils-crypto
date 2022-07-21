@@ -1,6 +1,5 @@
 package com.changhr.utils.crypto.asymmetric;
 
-import com.changhr.utils.crypto.utils.Signers;
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.gm.GMNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
@@ -11,27 +10,26 @@ import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.digests.SM3Digest;
 import org.bouncycastle.crypto.engines.SM2Engine;
 import org.bouncycastle.crypto.params.*;
-import org.bouncycastle.crypto.signers.DSAKCalculator;
-import org.bouncycastle.crypto.signers.RandomDSAKCalculator;
-import org.bouncycastle.crypto.util.PrivateKeyFactory;
+import org.bouncycastle.crypto.signers.*;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.KeyPairGeneratorSpi;
 import org.bouncycastle.jcajce.provider.asymmetric.util.ECUtil;
-import org.bouncycastle.jcajce.spec.SM2ParameterSpec;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.math.ec.ECFieldElement;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.math.ec.FixedPointCombMultiplier;
+import org.bouncycastle.util.BigIntegers;
 import org.bouncycastle.util.encoders.Hex;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -42,27 +40,20 @@ import java.util.Map;
 /**
  * 国密 SM2 非对称加/解密算法工具类
  * BC 库 SM2 算法签名/验签使用 DER 编码；加密/解密使用 c1||c2||c3 旧标准，不使用 DER 编码
- *
+ * <p>
  * 此工具类
  * encrypt/decrypt: 使用 c1||c3||c2 新标准，不使用 DER 编码
  * encryptWithDER/decryptWithDER: 使用 c1||c3||c2 新标准，使用 DER 编码
- *
+ * <p>
  * encryptOld/decryptOld: 使用 c1||c2||c3 旧标准，不使用 DER 编码
  * encryptOldWithDER/decryptOldWithDER: 使用 c1||c2||c3 旧标准，使用 DER 编码
- *
+ * <p>
  * sign/verify: 签名/验签方法不使用 DER 编码
  * signWithAsn1/verifyWithAsn1: 签名/验签方法使用 DER 编码
  *
- * @author changhr
+ * @author changhr2013
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
-public abstract class SM2Util {
-
-    static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-    }
+public abstract class SM2 {
 
     /**
      * 密钥算法类型
@@ -77,60 +68,40 @@ public abstract class SM2Util {
     /**
      * KeyMap 中公钥索引 KEY
      */
-    public static final String PUBLIC_KEY = "SM2PublicKey";
+    private static final String PUBLIC_KEY = "SM2PublicKey";
 
     /**
      * KeyMap 中私钥索引 KEY
      */
-    public static final String PRIVATE_KEY = "SM2PrivateKey";
-
-    /**
-     * SM2 标准曲线
-     */
-    private static X9ECParameters x9ECParameters = GMNamedCurves.getByName("sm2p256v1");
+    private static final String PRIVATE_KEY = "SM2PrivateKey";
 
     /**
      * SM2 标准杂凑值
      */
-    private static final byte[] USER_ID = "1234567812345678".getBytes();
+    private static final byte[] USER_ID = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38};
 
     private static final int RS_LEN = 32;
 
-    private static ECDomainParameters ecDomainParameters =
-            new ECDomainParameters(x9ECParameters.getCurve(), x9ECParameters.getG(), x9ECParameters.getN());
-
-    private static ECParameterSpec ecParameterSpec =
-            new ECParameterSpec(x9ECParameters.getCurve(), x9ECParameters.getG(), x9ECParameters.getN());
+    /**
+     * SM2 标准曲线名称
+     */
+    private static final String SM2_CURVE_NAME = "sm2p256v1";
 
     /**
-     * 使用私钥对数据签名，结果为直接拼接 rs 的字节数组
-     *
-     * @param msg            待签名数据
-     * @param swapPrivateKey SM2 交换私钥
-     * @return r||s，直接拼接 byte 数组的 rs
+     * SM2 标准曲线
      */
-    public static byte[] sign(byte[] msg, byte[] swapPrivateKey) {
-        return sign(msg, USER_ID, swapPrivateKey);
-    }
+    private static final X9ECParameters SM2_X9_EC_PARAMETERS = GMNamedCurves.getByName(SM2_CURVE_NAME);
 
-    /**
-     * 使用私钥对数据签名，结果为直接拼接 rs 的字节数组
-     *
-     * @param msg            待签名数据
-     * @param userId         签名者身份信息，默认应使用 "1234567812345678".getBytes()
-     * @param swapPrivateKey SM2 交换私钥
-     * @return r||s，直接拼接 byte 数组的 rs
-     */
-    public static byte[] sign(byte[] msg, byte[] userId, byte[] swapPrivateKey) {
-        return rsAsn1ToPlainByteArray(signWithAsn1(msg, userId, swapPrivateKey));
-    }
+    private static final ECDomainParameters SM2_DOMAIN_PARAMETERS = new ECNamedDomainParameters(GMNamedCurves.getOID(SM2_CURVE_NAME), SM2_X9_EC_PARAMETERS);
+
+    private static final ECParameterSpec SM2_PARAMETER_SPEC = new ECNamedCurveParameterSpec(SM2_CURVE_NAME, SM2_X9_EC_PARAMETERS.getCurve(), SM2_X9_EC_PARAMETERS.getG(), SM2_X9_EC_PARAMETERS.getN());
 
     /**
      * 使用私钥对数据签名，结果为 ASN1 格式的 rs 的字节数组
      *
      * @param msg            待签名数据
      * @param swapPrivateKey SM2 交换私钥
-     * @return rs in <b>asn1 format</b>
+     * @return ASN1 编码的签名
      */
     public static byte[] signWithAsn1(byte[] msg, byte[] swapPrivateKey) {
         return signWithAsn1(msg, USER_ID, swapPrivateKey);
@@ -142,45 +113,55 @@ public abstract class SM2Util {
      * @param msg            待签名数据
      * @param userId         签名者身份信息，默认应使用 "1234567812345678".getBytes()
      * @param swapPrivateKey SM2 交换私钥
-     * @return rs in <b>asn1 format</b>
+     * @return ASN1 编码的签名
      */
     public static byte[] signWithAsn1(byte[] msg, byte[] userId, byte[] swapPrivateKey) {
-        BCECPrivateKey bcecPrivateKey = buildPrivateKey(swapPrivateKey);
-        SM2ParameterSpec parameterSpec = new SM2ParameterSpec(userId);
+        return signWithAsn1(msg, userId, buildPrivateKey(swapPrivateKey));
+    }
+
+    /**
+     * 使用私钥对数据签名，结果为 ASN1 格式的 rs 的字节数组
+     *
+     * @param msg        待签名数据
+     * @param userId     签名者身份信息，默认应使用 "1234567812345678".getBytes()
+     * @param privateKey {@link PrivateKey}
+     * @return ASN1 编码的签名
+     */
+    public static byte[] signWithAsn1(byte[] msg, byte[] userId, PrivateKey privateKey) {
+        return sign(msg, userId, privateKey, StandardDSAEncoding.INSTANCE);
+    }
+
+    /**
+     * 使用私钥对数据签名
+     *
+     * @param msg        待签名数据
+     * @param userId     签名者身份信息，默认应使用 "1234567812345678".getBytes()
+     * @param privateKey {@link PrivateKey}
+     * @param encoding   签名的编码方式
+     * @return 签名
+     */
+    public static byte[] sign(byte[] msg, byte[] userId, PrivateKey privateKey, DSAEncoding encoding) {
+        SM2Signer signer = new SM2Signer(encoding, new SM3Digest());
         try {
-            Signature signer = Signature.getInstance(SIGNATURE_ALGORITHM, BouncyCastleProvider.PROVIDER_NAME);
-            signer.setParameter(parameterSpec);
-            signer.initSign(bcecPrivateKey, new SecureRandom());
+            AsymmetricKeyParameter ecParam = ECUtil.generatePrivateKeyParameter(privateKey);
+            signer.init(true, new ParametersWithID(ecParam, userId));
             signer.update(msg, 0, msg.length);
-            return signer.sign();
+            return signer.generateSignature();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     /**
-     * 验证直接拼接 rs 的签名
-     *
-     * @param msg           待验签的数据
-     * @param userId        签名者身份信息，默认应使用 "1234567812345678".getBytes()
-     * @param swapPublicKey SM2 交换公钥
-     * @param rs            r||s，直接拼接 byte 数组的 rs
-     * @return boolean
-     */
-    public static boolean verify(byte[] msg, byte[] userId, byte[] swapPublicKey, byte[] rs) {
-        return verifyWithAsn1(msg, userId, swapPublicKey, rsPlainByteArrayToAsn1(rs));
-    }
-
-    /**
-     * 验证直接拼接 rs 的签名
+     * 验证 ASN1 格式的签名
      *
      * @param msg           待验签的数据
      * @param swapPublicKey SM2 交换公钥
-     * @param rs            r||s，直接拼接 byte 数组的 rs
+     * @param asn1Sign      ASN1 编码的签名
      * @return boolean
      */
-    public static boolean verify(byte[] msg, byte[] swapPublicKey, byte[] rs) {
-        return verify(msg, USER_ID, swapPublicKey, rs);
+    public static boolean verifyWithAsn1(byte[] msg, byte[] swapPublicKey, byte[] asn1Sign) {
+        return verifyWithAsn1(msg, USER_ID, swapPublicKey, asn1Sign);
     }
 
     /**
@@ -189,49 +170,84 @@ public abstract class SM2Util {
      * @param msg           待验签的数据
      * @param userId        签名者身份信息，默认应使用 "1234567812345678".getBytes()
      * @param swapPublicKey SM2 交换公钥
-     * @param rs            in <b>asn1 format<b/>
+     * @param asn1Sign      ASN1 编码的签名
      * @return boolean
      */
-    public static boolean verifyWithAsn1(byte[] msg, byte[] userId, byte[] swapPublicKey, byte[] rs) {
-        BCECPublicKey bcecPublicKey = buildPublicKey(swapPublicKey);
-        SM2ParameterSpec parameterSpec = new SM2ParameterSpec(userId);
+    public static boolean verifyWithAsn1(byte[] msg, byte[] userId, byte[] swapPublicKey, byte[] asn1Sign) {
+        return verifyWithAsn1(msg, userId, buildPublicKey(swapPublicKey), asn1Sign);
+    }
+
+    /**
+     * 验证 ASN1 格式的签名
+     *
+     * @param msg       待验签的数据
+     * @param userId    签名者身份信息，默认应使用 "1234567812345678".getBytes()
+     * @param publicKey {@link PublicKey}
+     * @param asn1Sign  ASN1 编码的签名
+     * @return boolean
+     */
+    public static boolean verifyWithAsn1(byte[] msg, byte[] userId, PublicKey publicKey, byte[] asn1Sign) {
+        return verify(msg, userId, publicKey, asn1Sign, StandardDSAEncoding.INSTANCE);
+    }
+
+    /**
+     * 验证 ASN1 格式的签名
+     *
+     * @param msg       待验签的数据
+     * @param userId    签名者身份信息，默认应使用 "1234567812345678".getBytes()
+     * @param publicKey {@link PublicKey}
+     * @param signature 未编码的签名
+     * @param encoding  签名的编码方式
+     * @return boolean
+     */
+    public static boolean verify(byte[] msg, byte[] userId, PublicKey publicKey, byte[] signature, DSAEncoding encoding) {
+        SM2Signer signer = new SM2Signer(encoding, new SM3Digest());
         try {
-            Signature verifier = Signature.getInstance(SIGNATURE_ALGORITHM, BouncyCastleProvider.PROVIDER_NAME);
-            verifier.setParameter(parameterSpec);
-            verifier.initVerify(bcecPublicKey);
-            verifier.update(msg, 0, msg.length);
-            return verifier.verify(rs);
+            AsymmetricKeyParameter ecParam = ECUtil.generatePublicKeyParameter(publicKey);
+            signer.init(false, new ParametersWithID(ecParam, userId));
+            signer.update(msg, 0, msg.length);
+            return signer.verifySignature(signature);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    /**
-     * 验证 ASN1 格式的签名
-     *
-     * @param msg           待验签的数据
-     * @param swapPublicKey SM2 交换公钥
-     * @param rs            in <b>asn1 format<b/>
-     * @return boolean
-     */
-    public static boolean verifyWithAsn1(byte[] msg, byte[] swapPublicKey, byte[] rs) {
-        return verifyWithAsn1(msg, USER_ID, swapPublicKey, rs);
     }
 
     /**
      * BC 的 SM3withSM2 签名得到的结果的 rs 是 asn1 格式的，这个方法转换成直接拼接的 r||s
      *
-     * @param rsDer rs in asn1 format
+     * @param asn1Sign rs in asn1 format
      * @return sign result in plain byte array
      */
-    private static byte[] rsAsn1ToPlainByteArray(byte[] rsDer) {
-        ASN1Sequence sequence = ASN1Sequence.getInstance(rsDer);
+    public static byte[] rsAsn1ToPlainByteArray(byte[] asn1Sign) {
+        ASN1Sequence sequence = ASN1Sequence.getInstance(asn1Sign);
         byte[] r = bigIntToFixedLengthBytes(ASN1Integer.getInstance(sequence.getObjectAt(0)).getValue());
         byte[] s = bigIntToFixedLengthBytes(ASN1Integer.getInstance(sequence.getObjectAt(1)).getValue());
         byte[] result = new byte[RS_LEN * 2];
         System.arraycopy(r, 0, result, 0, r.length);
         System.arraycopy(s, 0, result, RS_LEN, s.length);
         return result;
+    }
+
+    /**
+     * BC 的 SM3withSM2 验签需要的 rs 是 asn1 格式的，这个方法将直接拼接 r||s 的字节数组转化成 asn1 格式
+     *
+     * @param sign in plain byte array
+     * @return rs result in asn1 format
+     */
+    public static byte[] rsPlainByteArrayToAsn1(byte[] sign) {
+        if (sign.length != RS_LEN * 2) {
+            throw new RuntimeException("error rs.");
+        }
+        BigInteger r = new BigInteger(1, Arrays.copyOfRange(sign, 0, RS_LEN));
+        BigInteger s = new BigInteger(1, Arrays.copyOfRange(sign, RS_LEN, RS_LEN * 2));
+        ASN1EncodableVector v = new ASN1EncodableVector();
+        v.add(new ASN1Integer(r));
+        v.add(new ASN1Integer(s));
+        try {
+            return new DERSequence(v).getEncoded(ASN1Encoding.DER);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -259,28 +275,6 @@ public abstract class SM2Util {
     }
 
     /**
-     * BC 的 SM3withSM2 验签需要的 rs 是 asn1 格式的，这个方法将直接拼接 r||s 的字节数组转化成 asn1 格式
-     *
-     * @param sign in plain byte array
-     * @return rs result in asn1 format
-     */
-    private static byte[] rsPlainByteArrayToAsn1(byte[] sign) {
-        if (sign.length != RS_LEN * 2) {
-            throw new RuntimeException("error rs.");
-        }
-        BigInteger r = new BigInteger(1, Arrays.copyOfRange(sign, 0, RS_LEN));
-        BigInteger s = new BigInteger(1, Arrays.copyOfRange(sign, RS_LEN, RS_LEN * 2));
-        ASN1EncodableVector v = new ASN1EncodableVector();
-        v.add(new ASN1Integer(r));
-        v.add(new ASN1Integer(s));
-        try {
-            return new DERSequence(v).getEncoded(ASN1Encoding.DER);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
      * 使用旧标准 c1||c2||c3 顺序的 SM2 非对称公钥加密
      *
      * @param data          待加密数据
@@ -288,27 +282,7 @@ public abstract class SM2Util {
      * @return byte[]
      */
     public static byte[] encryptOld(byte[] data, byte[] swapPublicKey) {
-        BCECPublicKey bcecPublicKey = buildPublicKey(swapPublicKey);
-        ECPublicKeyParameters ecPublicKeyParameters = new ECPublicKeyParameters(bcecPublicKey.getQ(), ecDomainParameters);
-        SM2Engine sm2Engine = new SM2Engine();
-        sm2Engine.init(true, new ParametersWithRandom(ecPublicKeyParameters, new SecureRandom()));
-        try {
-            return sm2Engine.processBlock(data, 0, data.length);
-        } catch (InvalidCipherTextException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * 使用旧标准 c1||c2||c3 顺序的 SM2 非对称公钥加密
-     * 加密结果使用 DER 编码
-     *
-     * @param data          待加密数据
-     * @param swapPublicKey SM2 交换公钥
-     * @return byte[]
-     */
-    public static byte[] encryptOldWithDER(byte[] data, byte[] swapPublicKey) {
-        return encodeC1C2C3ToAsn1(encryptOld(data, swapPublicKey));
+        return encrypt(data, buildPublicKey(swapPublicKey), SM2Engine.Mode.C1C2C3);
     }
 
     /**
@@ -319,19 +293,38 @@ public abstract class SM2Util {
      * @return byte[] 加密后的数据
      */
     public static byte[] encrypt(byte[] data, byte[] swapPublicKey) {
-        return changeC1C2C3ToC1C3C2(encryptOld(data, swapPublicKey));
+        return encrypt(data, buildPublicKey(swapPublicKey), SM2Engine.Mode.C1C3C2);
     }
 
     /**
      * 使用新标准 c1||c3||c2 顺序的 SM2 非对称公钥加密
-     * 加密结果使用 DER 编码
+     * 加密结果使用 ASN1 编码
      *
      * @param data          待加密数据
      * @param swapPublicKey SM2 交换公钥
      * @return byte[] 加密后的数据
      */
-    public static byte[] encryptWithDER(byte[] data, byte[] swapPublicKey) {
+    public static byte[] encryptWithAsn1(byte[] data, byte[] swapPublicKey) {
         return changeC1C2C3ToC1C3C2WithAsn1(encryptOld(data, swapPublicKey));
+    }
+
+    /**
+     * SM2 非对称公钥加密
+     *
+     * @param data      待加密数据
+     * @param publicKey SM2 公钥，{@link PublicKey}
+     * @param mode      加密模式，{@link SM2Engine.Mode}
+     * @return byte[]
+     */
+    public static byte[] encrypt(byte[] data, PublicKey publicKey, SM2Engine.Mode mode) {
+        SM2Engine sm2Engine = new SM2Engine(mode);
+        try {
+            AsymmetricKeyParameter ecParam = ECUtil.generatePublicKeyParameter(publicKey);
+            sm2Engine.init(true, new ParametersWithRandom(ecParam, CryptoServicesRegistrar.getSecureRandom()));
+            return sm2Engine.processBlock(data, 0, data.length);
+        } catch (InvalidCipherTextException | InvalidKeyException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -342,14 +335,48 @@ public abstract class SM2Util {
      * @return byte[] 解密后的数据
      */
     public static byte[] decryptOld(byte[] data, byte[] swapPrivateKey) {
-        byte[] c1c2c3 = convertDataToUnCompressed(data);
-        BCECPrivateKey bcecPrivateKey = buildPrivateKey(swapPrivateKey);
-        ECPrivateKeyParameters ecPrivateKeyParameters = new ECPrivateKeyParameters(bcecPrivateKey.getD(), ecDomainParameters);
-        SM2Engine sm2Engine = new SM2Engine();
-        sm2Engine.init(false, ecPrivateKeyParameters);
+        return decrypt(data, buildPrivateKey(swapPrivateKey), SM2Engine.Mode.C1C2C3);
+    }
+
+    /**
+     * 使用新标准 c1||c3||c2 顺序的 SM2 非对称私钥解密
+     *
+     * @param data           密文
+     * @param swapPrivateKey SM2 交换私钥
+     * @return byte[]
+     */
+    public static byte[] decrypt(byte[] data, byte[] swapPrivateKey) {
+        return decrypt(data, buildPrivateKey(swapPrivateKey), SM2Engine.Mode.C1C3C2);
+    }
+
+    /**
+     * 使用新标准 c1||c3||c2 顺序的 SM2 非对称私钥解密
+     * 密文使用 ASN1 编码
+     *
+     * @param data           密文
+     * @param swapPrivateKey SM2 交换私钥
+     * @return byte[]
+     */
+    public static byte[] decryptWithAsn1(byte[] data, byte[] swapPrivateKey) {
+        return decryptOld(changeAsn1C1C3C2ToC1C2C3(data), swapPrivateKey);
+    }
+
+    /**
+     * SM2 非对称私钥解密
+     *
+     * @param data       密文
+     * @param privateKey SM2 私钥，{@link PrivateKey}
+     * @param mode       解密模式，{@link SM2Engine.Mode}
+     * @return byte[]
+     */
+    public static byte[] decrypt(byte[] data, PrivateKey privateKey, SM2Engine.Mode mode) {
+        byte[] unCompressed = convertDataToUnCompressed(data);
+        SM2Engine sm2Engine = new SM2Engine(mode);
         try {
-            return sm2Engine.processBlock(c1c2c3, 0, c1c2c3.length);
-        } catch (InvalidCipherTextException e) {
+            AsymmetricKeyParameter ecParam = ECUtil.generatePrivateKeyParameter(privateKey);
+            sm2Engine.init(false, ecParam);
+            return sm2Engine.processBlock(unCompressed, 0, unCompressed.length);
+        } catch (InvalidCipherTextException | InvalidKeyException e) {
             throw new RuntimeException(e);
         }
     }
@@ -363,14 +390,14 @@ public abstract class SM2Util {
      */
     public static byte[] convertDataToUnCompressed(byte[] data) {
         ECPoint p;
-        int expectedLength = (x9ECParameters.getCurve().getFieldSize() + 7) / 8;
+        int expectedLength = (SM2_X9_EC_PARAMETERS.getCurve().getFieldSize() + 7) / 8;
         byte type = data[0];
         byte[] c1;
 
         switch (type) {
             // infinity
             case 0x00: {
-                p = x9ECParameters.getCurve().getInfinity();
+                p = SM2_X9_EC_PARAMETERS.getCurve().getInfinity();
                 c1 = new byte[1];
                 System.arraycopy(data, 0, c1, 0, c1.length);
                 break;
@@ -380,7 +407,7 @@ public abstract class SM2Util {
             case 0x03: {
                 c1 = new byte[expectedLength + 1];
                 System.arraycopy(data, 0, c1, 0, c1.length);
-                p = x9ECParameters.getCurve().decodePoint(c1);
+                p = SM2_X9_EC_PARAMETERS.getCurve().decodePoint(c1);
                 break;
             }
             // uncompressed
@@ -392,7 +419,7 @@ public abstract class SM2Util {
             case 0x07: {
                 c1 = new byte[2 * expectedLength + 1];
                 System.arraycopy(data, 0, c1, 0, c1.length);
-                p = x9ECParameters.getCurve().decodePoint(c1);
+                p = SM2_X9_EC_PARAMETERS.getCurve().decodePoint(c1);
                 break;
             }
             default:
@@ -408,41 +435,6 @@ public abstract class SM2Util {
     }
 
     /**
-     * 使用旧标准 c1||c2||c3 顺序的 SM2 非对称私钥解密
-     * 密文使用 DER 编码
-     *
-     * @param data           待解密数据
-     * @param swapPrivateKey SM2 交换私钥
-     * @return byte[] 解密后的数据
-     */
-    public static byte[] decryptOldWithDER(byte[] data, byte[] swapPrivateKey) {
-        return decryptOld(decodeAsn1C1C2C3(data), swapPrivateKey);
-    }
-
-    /**
-     * 使用新标准 c1||c3||c2 顺序的 SM2 非对称私钥解密
-     *
-     * @param data           密文
-     * @param swapPrivateKey SM2 交换私钥
-     * @return byte[]
-     */
-    public static byte[] decrypt(byte[] data, byte[] swapPrivateKey) {
-        return decryptOld(changeC1C3C2ToC1C2C3(data), swapPrivateKey);
-    }
-
-    /**
-     * 使用新标准 c1||c3||c2 顺序的 SM2 非对称私钥解密
-     * 密文使用 DER 编码
-     *
-     * @param data           密文
-     * @param swapPrivateKey SM2 交换私钥
-     * @return byte[]
-     */
-    public static byte[] decryptWithDER(byte[] data, byte[] swapPrivateKey) {
-        return decryptOld(changeAsn1C1C3C2ToC1C2C3(data), swapPrivateKey);
-    }
-
-    /**
      * BC 加解密使用旧标 c1||c2||c3，此方法在加密后调用，将结果转换为 c1||c3||c2
      *
      * @param c1c2c3 c1c2c3 拼接顺序的 byte 数组
@@ -450,7 +442,7 @@ public abstract class SM2Util {
      */
     private static byte[] changeC1C2C3ToC1C3C2(byte[] c1c2c3) {
         // sm2p256v1 的这个固定 65。可以看 GMNamedCurves、ECCurve 代码
-        final int c1Len = (x9ECParameters.getCurve().getFieldSize() + 7) / 8 * 2 + 1;
+        final int c1Len = (SM2_X9_EC_PARAMETERS.getCurve().getFieldSize() + 7) / 8 * 2 + 1;
         // 长度为 new SM3Digest().getDigestSize()
         final int c3Len = 32;
         byte[] result = new byte[c1c2c3.length];
@@ -472,12 +464,12 @@ public abstract class SM2Util {
     @SuppressWarnings("Duplicates")
     private static byte[] changeC1C2C3ToC1C3C2WithAsn1(byte[] c1c2c3) {
         // sm2p256v1 的这个固定 65。可以看 GMNamedCurves、ECCurve 代码
-        final int c1Len = (x9ECParameters.getCurve().getFieldSize() + 7) / 8 * 2 + 1;
+        final int c1Len = (SM2_X9_EC_PARAMETERS.getCurve().getFieldSize() + 7) / 8 * 2 + 1;
         byte[] c1 = new byte[c1Len];
         System.arraycopy(c1c2c3, 0, c1, 0, c1Len);
 
-        BigInteger x = x9ECParameters.getCurve().decodePoint(c1).getXCoord().toBigInteger();
-        BigInteger y = x9ECParameters.getCurve().decodePoint(c1).getYCoord().toBigInteger();
+        BigInteger x = SM2_X9_EC_PARAMETERS.getCurve().decodePoint(c1).getXCoord().toBigInteger();
+        BigInteger y = SM2_X9_EC_PARAMETERS.getCurve().decodePoint(c1).getYCoord().toBigInteger();
 
         // 长度为 new SM3Digest().getDigestSize()
         final int c3Len = 32;
@@ -509,12 +501,12 @@ public abstract class SM2Util {
     @SuppressWarnings("Duplicates")
     private static byte[] encodeC1C2C3ToAsn1(byte[] c1c2c3) {
         // sm2p256v1 的这个固定 65。可以看 GMNamedCurves、ECCurve 代码
-        final int c1Len = (x9ECParameters.getCurve().getFieldSize() + 7) / 8 * 2 + 1;
+        final int c1Len = (SM2_X9_EC_PARAMETERS.getCurve().getFieldSize() + 7) / 8 * 2 + 1;
         byte[] c1 = new byte[c1Len];
         System.arraycopy(c1c2c3, 0, c1, 0, c1Len);
 
-        BigInteger x = x9ECParameters.getCurve().decodePoint(c1).getXCoord().toBigInteger();
-        BigInteger y = x9ECParameters.getCurve().decodePoint(c1).getYCoord().toBigInteger();
+        BigInteger x = SM2_X9_EC_PARAMETERS.getCurve().decodePoint(c1).getXCoord().toBigInteger();
+        BigInteger y = SM2_X9_EC_PARAMETERS.getCurve().decodePoint(c1).getYCoord().toBigInteger();
 
         // 长度为 new SM3Digest().getDigestSize()
         final int c3Len = 32;
@@ -545,7 +537,7 @@ public abstract class SM2Util {
      */
     private static byte[] changeC1C3C2ToC1C2C3(byte[] c1c3c2) {
         // sm2p256v1 的这个固定 65。可以看 GMNamedCurves、ECCurve 代码
-        final int c1Len = (x9ECParameters.getCurve().getFieldSize() + 7) / 8 * 2 + 1;
+        final int c1Len = (SM2_X9_EC_PARAMETERS.getCurve().getFieldSize() + 7) / 8 * 2 + 1;
         // 长度为 new SM3Digest().getDigestSize()
         final int c3Len = 32;
         byte[] result = new byte[c1c3c2.length];
@@ -574,7 +566,7 @@ public abstract class SM2Util {
         }
         BigInteger x = ASN1Integer.getInstance(sequence.getObjectAt(0)).getPositiveValue();
         BigInteger y = ASN1Integer.getInstance(sequence.getObjectAt(1)).getPositiveValue();
-        byte[] c1 = x9ECParameters.getCurve().validatePoint(x, y).getEncoded(false);
+        byte[] c1 = SM2_X9_EC_PARAMETERS.getCurve().validatePoint(x, y).getEncoded(false);
         byte[] c3 = ((ASN1OctetString) sequence.getObjectAt(2)).getOctets();
         byte[] c2 = ((ASN1OctetString) sequence.getObjectAt(3)).getOctets();
         byte[] c1c2c3 = new byte[c1.length + c2.length + c3.length];
@@ -600,7 +592,7 @@ public abstract class SM2Util {
         }
         BigInteger x = ASN1Integer.getInstance(sequence.getObjectAt(0)).getPositiveValue();
         BigInteger y = ASN1Integer.getInstance(sequence.getObjectAt(1)).getPositiveValue();
-        byte[] c1 = x9ECParameters.getCurve().validatePoint(x, y).getEncoded(false);
+        byte[] c1 = SM2_X9_EC_PARAMETERS.getCurve().validatePoint(x, y).getEncoded(false);
         byte[] c2 = ((ASN1OctetString) sequence.getObjectAt(2)).getOctets();
         byte[] c3 = ((ASN1OctetString) sequence.getObjectAt(3)).getOctets();
         byte[] c1c2c3 = new byte[c1.length + c2.length + c3.length];
@@ -611,35 +603,34 @@ public abstract class SM2Util {
     }
 
     /**
-     * 初始化密钥
+     * 生成 SM2 密钥对
      *
      * @return Map 密钥 Map
      */
-    public static Map<String, Object> initKey() {
-        // 实例化密钥对生成器
-        KeyPairGenerator keyPairGen;
-        try {
-            keyPairGen = KeyPairGenerator.getInstance(KEY_ALGORITHM, BouncyCastleProvider.PROVIDER_NAME);
-            // 初始化密钥对生成器
-            keyPairGen.initialize(ecParameterSpec, new SecureRandom());
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("no such algorithm: " + KEY_ALGORITHM, e);
-        } catch (NoSuchProviderException e) {
-            throw new RuntimeException("no such provider: " + BouncyCastleProvider.PROVIDER_NAME, e);
-        } catch (InvalidAlgorithmParameterException e) {
-            throw new RuntimeException("invalid algorithm parameter", e);
-        }
+    public static Map<String, Key> initKey() {
         // 生成密钥对
-        KeyPair keyPair = keyPairGen.generateKeyPair();
-        // 公钥
-        BCECPublicKey publicKey = (BCECPublicKey) keyPair.getPublic();
-        // 私钥
-        BCECPrivateKey privateKey = (BCECPrivateKey) keyPair.getPrivate();
+        KeyPair keyPair = initKeyPair();
         // 封装密钥
-        Map<String, Object> keyMap = new HashMap<>(2);
-        keyMap.put(PUBLIC_KEY, publicKey);
-        keyMap.put(PRIVATE_KEY, privateKey);
+        Map<String, Key> keyMap = new HashMap<>(2);
+        keyMap.put(PUBLIC_KEY, keyPair.getPublic());
+        keyMap.put(PRIVATE_KEY, keyPair.getPrivate());
         return keyMap;
+    }
+
+    /**
+     * 生成 SM2 密钥对
+     *
+     * @return 密钥对，{@link KeyPair}
+     */
+    public static KeyPair initKeyPair() {
+        try {
+            KeyPairGeneratorSpi.EC ecKeyPairGen = new KeyPairGeneratorSpi.EC(KEY_ALGORITHM, BouncyCastleProvider.CONFIGURATION);
+            ecKeyPairGen.initialize(SM2_PARAMETER_SPEC, CryptoServicesRegistrar.getSecureRandom());
+            // 生成密钥对
+            return ecKeyPairGen.generateKeyPair();
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new RuntimeException("invalid algorithm parameter exception.", e);
+        }
     }
 
     /**
@@ -648,21 +639,9 @@ public abstract class SM2Util {
      * @param keyMap 密钥 Map
      * @return byte[] SM2 交换私钥（私钥分量 D 的字节数组）
      */
-    public static byte[] getSwapPrivateKey(Map<String, Object> keyMap) {
+    public static byte[] getSwapPrivateKey(Map<String, Key> keyMap) {
         BCECPrivateKey privateKey = (BCECPrivateKey) keyMap.get(PRIVATE_KEY);
         return bigIntToFixedLengthBytes(privateKey.getD());
-    }
-
-    /**
-     * 获取公钥分量 X，Y 作为交换的公钥（65 个字节或 33 个字节）
-     *
-     * @param keyMap     密钥 Map
-     * @param compressed 公钥是否进行压缩
-     * @return byte[] SM2 交换公钥（公钥分量 X，Y 拼合的字节数组）
-     */
-    public static byte[] getSwapPublicKey(Map<String, Object> keyMap, boolean compressed) {
-        BCECPublicKey publicKey = (BCECPublicKey) keyMap.get(PUBLIC_KEY);
-        return publicKey.getQ().getEncoded(compressed);
     }
 
     /**
@@ -672,9 +651,21 @@ public abstract class SM2Util {
      * @param keyMap 密钥 Map
      * @return SM2 交换公钥（公钥分量 X，Y 拼合的字节数组）
      */
-    public static byte[] getSwapPublicKey(Map<String, Object> keyMap) {
+    public static byte[] getSwapPublicKey(Map<String, Key> keyMap) {
         BCECPublicKey publicKey = (BCECPublicKey) keyMap.get(PUBLIC_KEY);
         return publicKey.getQ().getEncoded(false);
+    }
+
+    /**
+     * 获取公钥分量 X，Y 作为交换的公钥（65 个字节或 33 个字节）
+     *
+     * @param keyMap     密钥 Map
+     * @param compressed 公钥是否进行压缩
+     * @return byte[] SM2 交换公钥（公钥分量 X，Y 拼合的字节数组）
+     */
+    public static byte[] getSwapPublicKey(Map<String, Key> keyMap, boolean compressed) {
+        BCECPublicKey publicKey = (BCECPublicKey) keyMap.get(PUBLIC_KEY);
+        return publicKey.getQ().getEncoded(compressed);
     }
 
     /**
@@ -699,24 +690,55 @@ public abstract class SM2Util {
      * 从交换私钥还原完整的 BCECPrivateKey
      *
      * @param swapPrivateKey 交换私钥（D 分量字节数组）
-     * @return BCECPrivateKey 完整的私钥
+     * @return {@link BCECPrivateKey} 完整的私钥
      */
-    private static BCECPrivateKey buildPrivateKey(byte[] swapPrivateKey) {
+    private static PrivateKey buildPrivateKey(byte[] swapPrivateKey) {
         BigInteger d = new BigInteger(1, swapPrivateKey);
-        ECPrivateKeySpec ecPrivateKeySpec = new ECPrivateKeySpec(d, ecParameterSpec);
-        return new BCECPrivateKey("EC", ecPrivateKeySpec, BouncyCastleProvider.CONFIGURATION);
+        ECPrivateKeySpec ecPrivateKeySpec = new ECPrivateKeySpec(d, SM2_PARAMETER_SPEC);
+        return new BCECPrivateKey(KEY_ALGORITHM, ecPrivateKeySpec, BouncyCastleProvider.CONFIGURATION);
     }
 
     /**
      * 从交换公钥的字节数组中还原出 BCECPublicKey
      *
      * @param swapPublicKey 交换公钥的字节数组（标志位 + 点）
-     * @return BCECPublicKey 完整的公钥
+     * @return {@link BCECPublicKey} 完整的公钥
      */
-    private static BCECPublicKey buildPublicKey(byte[] swapPublicKey) {
-        ECPoint ecPoint = x9ECParameters.getCurve().decodePoint(swapPublicKey);
-        ECPublicKeySpec ecPublicKeySpec = new ECPublicKeySpec(ecPoint, ecParameterSpec);
+    private static PublicKey buildPublicKey(byte[] swapPublicKey) {
+        ECPoint ecPoint = SM2_X9_EC_PARAMETERS.getCurve().decodePoint(swapPublicKey);
+        ECPublicKeySpec ecPublicKeySpec = new ECPublicKeySpec(ecPoint, SM2_PARAMETER_SPEC);
         return new BCECPublicKey(KEY_ALGORITHM, ecPublicKeySpec, BouncyCastleProvider.CONFIGURATION);
+    }
+
+    /**
+     * 从完整的 BCECPrivateKey 获取交换私钥
+     *
+     * @param privateKey {@link BCECPrivateKey} 完整的私钥
+     * @return 交换私钥（D 分量字节数组）
+     */
+    private static byte[] extractSwapPrivateKey(PrivateKey privateKey) {
+        return BigIntegers.asUnsignedByteArray(32, ((BCECPrivateKey) privateKey).getD());
+    }
+
+    /**
+     * 从完整的 BCECPublicKey 获取交换公钥
+     *
+     * @param publicKey {@link BCECPublicKey} 完整的公钥
+     * @return 交换公钥的字节数组（标志位 + 点）
+     */
+    private static byte[] extractSwapPublicKey(PublicKey publicKey) {
+        return ((BCECPublicKey) publicKey).getQ().getEncoded(false);
+    }
+
+    /**
+     * 从完整的 BCECPublicKey 获取交换公钥
+     *
+     * @param publicKey  {@link BCECPublicKey} 完整的公钥
+     * @param compressed 是否进行压缩
+     * @return 交换公钥的字节数组（标志位 + 点）
+     */
+    private static byte[] extractSwapPublicKey(PublicKey publicKey, boolean compressed) {
+        return ((BCECPublicKey) publicKey).getQ().getEncoded(compressed);
     }
 
     /**
@@ -727,16 +749,13 @@ public abstract class SM2Util {
      * @return 预处理后的输入数据
      */
     public static byte[] getPreDataByPrivateKey(byte[] inData, byte[] swapPrivateKey) {
-        BCECPrivateKey privateKey = buildPrivateKey(swapPrivateKey);
-        AsymmetricKeyParameter ecParam;
         try {
-            ecParam = PrivateKeyFactory.createKey(privateKey.getEncoded());
+            AsymmetricKeyParameter ecParam = ECUtil.generatePrivateKeyParameter(buildPrivateKey(swapPrivateKey));
+            byte[] z = getZ(true, new ParametersWithID(ecParam, USER_ID));
+            return hashMergeInData(z, inData);
         } catch (Exception e) {
-            throw new RuntimeException("PrivateKeyFactory create private key failed", e);
+            throw new RuntimeException("ECUtil generate private key failed", e);
         }
-        byte[] z = getZ(true, new ParametersWithID(ecParam, USER_ID));
-
-        return hashMergeInData(z, inData);
     }
 
     /**
@@ -747,21 +766,17 @@ public abstract class SM2Util {
      * @return 预处理后的输入数据
      */
     public static byte[] getPreDataByPublicKey(byte[] inData, byte[] swapPublicKey) {
-        BCECPublicKey publicKey = buildPublicKey(swapPublicKey);
-
-        AsymmetricKeyParameter ecParam;
         try {
-            ecParam = ECUtil.generatePublicKeyParameter(publicKey);
+            AsymmetricKeyParameter ecParam = ECUtil.generatePublicKeyParameter(buildPublicKey(swapPublicKey));
+            byte[] z = getZ(false, new ParametersWithID(ecParam, USER_ID));
+            return hashMergeInData(z, inData);
         } catch (InvalidKeyException e) {
-            throw new RuntimeException("ECUtil generate public key failed");
+            throw new RuntimeException("ECUtil generate public key failed", e);
         }
-        byte[] z = getZ(false, new ParametersWithID(ecParam, USER_ID));
-
-        return hashMergeInData(z, inData);
     }
 
     private static byte[] hashMergeInData(byte[] z, byte[] inData) {
-        final SM3Digest digest = new SM3Digest();
+        SM3Digest digest = new SM3Digest();
         digest.update(z, 0, z.length);
         digest.update(inData, 0, inData.length);
 
@@ -848,21 +863,4 @@ public abstract class SM2Util {
         digest.update(p, 0, p.length);
     }
 
-    public static void main(String[] args) throws Exception {
-
-        byte[] inData = "hello world!".getBytes(StandardCharsets.UTF_8);
-
-        Map<String, Object> keyMap = SM2Util.initKey();
-
-        byte[] publicKey = SM2Util.getSwapPublicKey(keyMap);
-
-        byte[] preInData = SM2Util.getPreDataByPublicKey(inData, publicKey);
-        System.out.println(Hex.toHexString(preInData));
-
-        byte[] privateKey = SM2Util.getSwapPrivateKey(keyMap);
-
-        BCECPrivateKey bcecPrivateKey = SM2Util.buildPrivateKey(privateKey);
-        byte[] sign1 = Signers.SM2Sign(inData, bcecPrivateKey);
-
-    }
 }

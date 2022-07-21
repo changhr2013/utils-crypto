@@ -1,4 +1,4 @@
-package com.changhr.utils.crypto.utils;
+package com.changhr.utils.crypto.hash;
 
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
@@ -9,6 +9,11 @@ import org.bouncycastle.util.encoders.Hex;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * 银联 PosEcbMac
+ *
+ * @author changhr2013
+ */
 public class PosEcbMac implements Mac {
 
     private byte[] mac;

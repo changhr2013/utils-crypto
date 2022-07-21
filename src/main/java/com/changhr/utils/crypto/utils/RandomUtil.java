@@ -1,6 +1,7 @@
 package com.changhr.utils.crypto.utils;
 
 import java.security.SecureRandom;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 随机数工具类
@@ -27,10 +28,9 @@ public class RandomUtil {
         return nonce;
     }
 
-    public static byte[] generateGCMNonce() {
-        SecureRandom secureRandom = getSecureRandom();
+    public static byte[] generateGcmNonce() {
         byte[] nonce = new byte[96 / Byte.SIZE];
-        secureRandom.nextBytes(nonce);
+        ThreadLocalRandom.current().nextBytes(nonce);
         return nonce;
     }
 

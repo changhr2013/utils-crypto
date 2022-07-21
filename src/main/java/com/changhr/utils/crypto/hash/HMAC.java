@@ -1,6 +1,5 @@
 package com.changhr.utils.crypto.hash;
 
-import com.changhr.utils.crypto.provider.UnlimitedHolder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
 
@@ -16,21 +15,19 @@ import java.security.Security;
 /**
  * MAC 摘要算法工具类
  *
- * @author changhr
+ * @author changhr2013
  * @create 2019-05-08 10:53
  */
-@SuppressWarnings({"WeakerAccess"})
-public abstract class HMACUtil {
+public abstract class HMAC {
 
     static {
-        UnlimitedHolder.init();
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
     }
 
     /**
-     * Hmac 算法类型
+     * HMAC 算法类型
      */
     public static final String HMAC_MD5 = "HmacMD5";
     public static final String HMAC_SHA256 = "HmacSHA256";
@@ -43,15 +40,6 @@ public abstract class HMACUtil {
      */
     public static byte[] initHmacMD5Key() {
         return initHmacKey(HMAC_MD5);
-    }
-
-    /**
-     * 初始化 Hex 形式的 HmacMD5 密钥
-     *
-     * @return hex 格式的密钥
-     */
-    public static String initHmacMD5HexKey() {
-        return Hex.toHexString(initHmacKey(HMAC_MD5));
     }
 
     /**
@@ -86,15 +74,6 @@ public abstract class HMACUtil {
     }
 
     /**
-     * 初始化 Hex 形式的 HmacSHA256 密钥
-     *
-     * @return hex 格式的密钥
-     */
-    public static String initHmacSHA256HexKey() {
-        return Hex.toHexString(initHmacKey(HMAC_SHA256));
-    }
-
-    /**
      * HmacSHA256 消息摘要
      *
      * @param data 待做摘要处理的数据
@@ -116,15 +95,6 @@ public abstract class HMACUtil {
      */
     public static byte[] initHmacSM3Key() {
         return initHmacKey(HMAC_SM3, BouncyCastleProvider.PROVIDER_NAME);
-    }
-
-    /**
-     * 初始化 HmacSM3 密钥
-     *
-     * @return hex 格式密钥
-     */
-    public static String initHmacSM3HexKey() {
-        return Hex.toHexString(initHmacKey(HMAC_SM3, BouncyCastleProvider.PROVIDER_NAME));
     }
 
     /**
@@ -200,15 +170,15 @@ public abstract class HMACUtil {
     /**
      * 通用 Hmac 摘要方法
      *
-     * @param data      待摘要数据
-     * @param key       hmac key
+     * @param dataBytes 待摘要数据
+     * @param keyBytes  hmac key
      * @param algorithm 算法类型
      * @param provider  jce 实现方
      * @return Hmac 消息摘要
      */
-    public static byte[] hmac(byte[] data, byte[] key, String algorithm, String provider) {
+    public static byte[] hmac(byte[] dataBytes, byte[] keyBytes, String algorithm, String provider) {
         // 还原密钥
-        SecretKeySpec secretKeySpec = new SecretKeySpec(key, algorithm);
+        SecretKeySpec secretKeySpec = new SecretKeySpec(keyBytes, algorithm);
         // 实例化 Mac
         Mac mac;
         try {
@@ -227,6 +197,6 @@ public abstract class HMACUtil {
             throw new RuntimeException("invalid key exception");
         }
         // 执行消息摘要
-        return mac.doFinal(data);
+        return mac.doFinal(dataBytes);
     }
 }
