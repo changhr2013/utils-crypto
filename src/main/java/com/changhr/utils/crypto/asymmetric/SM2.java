@@ -41,14 +41,13 @@ import java.util.Map;
  * 国密 SM2 非对称加/解密算法工具类
  * BC 库 SM2 算法签名/验签使用 DER 编码；加密/解密使用 c1||c2||c3 旧标准，不使用 DER 编码
  * <p>
- * 此工具类
- * encrypt/decrypt: 使用 c1||c3||c2 新标准，不使用 DER 编码
- * encryptWithDER/decryptWithDER: 使用 c1||c3||c2 新标准，使用 DER 编码
+ * 此工具类 <br/>
+ * encrypt/decrypt: 使用 c1||c3||c2 新标准，不使用 DER 编码 <br/>
+ * encryptWithAsn1/decryptWithAsn1: 使用 c1||c3||c2 新标准，使用 DER 编码
  * <p>
  * encryptOld/decryptOld: 使用 c1||c2||c3 旧标准，不使用 DER 编码
- * encryptOldWithDER/decryptOldWithDER: 使用 c1||c2||c3 旧标准，使用 DER 编码
  * <p>
- * sign/verify: 签名/验签方法不使用 DER 编码
+ * sign/verify: 签名/验签方法不使用 DER 编码 <br/>
  * signWithAsn1/verifyWithAsn1: 签名/验签方法使用 DER 编码
  *
  * @author changhr2013
@@ -91,8 +90,6 @@ public abstract class SM2 {
      * SM2 标准曲线
      */
     private static final X9ECParameters SM2_X9_EC_PARAMETERS = GMNamedCurves.getByName(SM2_CURVE_NAME);
-
-    private static final ECDomainParameters SM2_DOMAIN_PARAMETERS = new ECNamedDomainParameters(GMNamedCurves.getOID(SM2_CURVE_NAME), SM2_X9_EC_PARAMETERS);
 
     private static final ECParameterSpec SM2_PARAMETER_SPEC = new ECNamedCurveParameterSpec(SM2_CURVE_NAME, SM2_X9_EC_PARAMETERS.getCurve(), SM2_X9_EC_PARAMETERS.getG(), SM2_X9_EC_PARAMETERS.getN());
 
@@ -218,7 +215,7 @@ public abstract class SM2 {
      * @param asn1Sign rs in asn1 format
      * @return sign result in plain byte array
      */
-    public static byte[] rsAsn1ToPlainByteArray(byte[] asn1Sign) {
+    public static byte[] decodeAsn1Sign(byte[] asn1Sign) {
         ASN1Sequence sequence = ASN1Sequence.getInstance(asn1Sign);
         byte[] r = bigIntToFixedLengthBytes(ASN1Integer.getInstance(sequence.getObjectAt(0)).getValue());
         byte[] s = bigIntToFixedLengthBytes(ASN1Integer.getInstance(sequence.getObjectAt(1)).getValue());
@@ -234,7 +231,7 @@ public abstract class SM2 {
      * @param sign in plain byte array
      * @return rs result in asn1 format
      */
-    public static byte[] rsPlainByteArrayToAsn1(byte[] sign) {
+    public static byte[] encodeAsn1Sign(byte[] sign) {
         if (sign.length != RS_LEN * 2) {
             throw new RuntimeException("error rs.");
         }
@@ -305,7 +302,7 @@ public abstract class SM2 {
      * @return byte[] 加密后的数据
      */
     public static byte[] encryptWithAsn1(byte[] data, byte[] swapPublicKey) {
-        return changeC1C2C3ToC1C3C2WithAsn1(encryptOld(data, swapPublicKey));
+        return encodeAsn1Cipher(encrypt(data, buildPublicKey(swapPublicKey), SM2Engine.Mode.C1C3C2), SM2Engine.Mode.C1C3C2);
     }
 
     /**
@@ -358,7 +355,7 @@ public abstract class SM2 {
      * @return byte[]
      */
     public static byte[] decryptWithAsn1(byte[] data, byte[] swapPrivateKey) {
-        return decryptOld(changeAsn1C1C3C2ToC1C2C3(data), swapPrivateKey);
+        return decrypt(decodeAsn1Cipher(data), buildPrivateKey(swapPrivateKey), SM2Engine.Mode.C1C3C2);
     }
 
     /**
@@ -440,7 +437,7 @@ public abstract class SM2 {
      * @param c1c2c3 c1c2c3 拼接顺序的 byte 数组
      * @return byte[] c1c3c2
      */
-    private static byte[] changeC1C2C3ToC1C3C2(byte[] c1c2c3) {
+    public static byte[] changeC1C2C3ToC1C3C2(byte[] c1c2c3) {
         // sm2p256v1 的这个固定 65。可以看 GMNamedCurves、ECCurve 代码
         final int c1Len = (SM2_X9_EC_PARAMETERS.getCurve().getFieldSize() + 7) / 8 * 2 + 1;
         // 长度为 new SM3Digest().getDigestSize()
@@ -456,86 +453,12 @@ public abstract class SM2 {
     }
 
     /**
-     * 将 【c1||c2||c3 格式的密文】转换为【DER 编码的 c1||c3||c2 格式的密文】
-     *
-     * @param c1c2c3 c1||c2||c3 格式的密文
-     * @return DER 编码的 c1||c3||c2 格式的密文
-     */
-    @SuppressWarnings("Duplicates")
-    private static byte[] changeC1C2C3ToC1C3C2WithAsn1(byte[] c1c2c3) {
-        // sm2p256v1 的这个固定 65。可以看 GMNamedCurves、ECCurve 代码
-        final int c1Len = (SM2_X9_EC_PARAMETERS.getCurve().getFieldSize() + 7) / 8 * 2 + 1;
-        byte[] c1 = new byte[c1Len];
-        System.arraycopy(c1c2c3, 0, c1, 0, c1Len);
-
-        BigInteger x = SM2_X9_EC_PARAMETERS.getCurve().decodePoint(c1).getXCoord().toBigInteger();
-        BigInteger y = SM2_X9_EC_PARAMETERS.getCurve().decodePoint(c1).getYCoord().toBigInteger();
-
-        // 长度为 new SM3Digest().getDigestSize()
-        final int c3Len = 32;
-        byte[] c3 = new byte[c3Len];
-        System.arraycopy(c1c2c3, c1c2c3.length - c3Len, c3, 0, c3Len);
-
-        final int c2Len = c1c2c3.length - c1Len - c3Len;
-        byte[] c2 = new byte[c2Len];
-        System.arraycopy(c1c2c3, c1Len, c2, 0, c2Len);
-
-        ASN1EncodableVector v = new ASN1EncodableVector();
-        v.add(new ASN1Integer(x));
-        v.add(new ASN1Integer(y));
-        v.add(new DEROctetString(c3));
-        v.add(new DEROctetString(c2));
-        try {
-            return new DERSequence(v).getEncoded(ASN1Encoding.DER);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * 为 c1||c2||c3 格式的密文添加 DER 编码
-     *
-     * @param c1c2c3 c1||c2||c3 格式的密文
-     * @return DER 编码的 c1||c2||c3 格式的密文
-     */
-    @SuppressWarnings("Duplicates")
-    private static byte[] encodeC1C2C3ToAsn1(byte[] c1c2c3) {
-        // sm2p256v1 的这个固定 65。可以看 GMNamedCurves、ECCurve 代码
-        final int c1Len = (SM2_X9_EC_PARAMETERS.getCurve().getFieldSize() + 7) / 8 * 2 + 1;
-        byte[] c1 = new byte[c1Len];
-        System.arraycopy(c1c2c3, 0, c1, 0, c1Len);
-
-        BigInteger x = SM2_X9_EC_PARAMETERS.getCurve().decodePoint(c1).getXCoord().toBigInteger();
-        BigInteger y = SM2_X9_EC_PARAMETERS.getCurve().decodePoint(c1).getYCoord().toBigInteger();
-
-        // 长度为 new SM3Digest().getDigestSize()
-        final int c3Len = 32;
-        byte[] c3 = new byte[c3Len];
-        System.arraycopy(c1c2c3, c1c2c3.length - c3Len, c3, 0, c3Len);
-
-        final int c2Len = c1c2c3.length - c1Len - c3Len;
-        byte[] c2 = new byte[c2Len];
-        System.arraycopy(c1c2c3, c1Len, c2, 0, c2Len);
-
-        ASN1EncodableVector v = new ASN1EncodableVector();
-        v.add(new ASN1Integer(x));
-        v.add(new ASN1Integer(y));
-        v.add(new DEROctetString(c2));
-        v.add(new DEROctetString(c3));
-        try {
-            return new DERSequence(v).getEncoded(ASN1Encoding.DER);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
      * BC 加解密使用旧标 c1||c2||c3，此方法在解密前调用，将密文转换为 c1||c2||c3 再去解密
      *
      * @param c1c3c2 c1c3c2 拼接的 byte 数组
      * @return byte[] c1c2c3
      */
-    private static byte[] changeC1C3C2ToC1C2C3(byte[] c1c3c2) {
+    public static byte[] changeC1C3C2ToC1C2C3(byte[] c1c3c2) {
         // sm2p256v1 的这个固定 65。可以看 GMNamedCurves、ECCurve 代码
         final int c1Len = (SM2_X9_EC_PARAMETERS.getCurve().getFieldSize() + 7) / 8 * 2 + 1;
         // 长度为 new SM3Digest().getDigestSize()
@@ -551,55 +474,76 @@ public abstract class SM2 {
     }
 
     /**
-     * 将【DER 编码的 c1||c3||c2 格式的密文】转换为【c1||c2||c3 格式的密文】
+     * 为原始密文添加 ASN1 编码
      *
-     * @param asn1C1C2C3 DER 编码的 c1||c3||c2 格式的密文
-     * @return c1||c2||c3 格式的密文
+     * @param plainCipher 原始密文
+     * @return ASN1 编码的密文
      */
-    @SuppressWarnings("Duplicates")
-    private static byte[] changeAsn1C1C3C2ToC1C2C3(byte[] asn1C1C2C3) {
-        ASN1Sequence sequence;
+    public static byte[] encodeAsn1Cipher(byte[] plainCipher, SM2Engine.Mode mode) {
+        // sm2p256v1 的这个固定 65。可以看 GMNamedCurves、ECCurve 代码
+        final int c1Len = (SM2_X9_EC_PARAMETERS.getCurve().getFieldSize() + 7) / 8 * 2 + 1;
+        byte[] c1 = new byte[c1Len];
+        System.arraycopy(plainCipher, 0, c1, 0, c1Len);
+
+        BigInteger x = SM2_X9_EC_PARAMETERS.getCurve().decodePoint(c1).getXCoord().toBigInteger();
+        BigInteger y = SM2_X9_EC_PARAMETERS.getCurve().decodePoint(c1).getYCoord().toBigInteger();
+
+        ASN1EncodableVector v = new ASN1EncodableVector();
+        v.add(new ASN1Integer(x));
+        v.add(new ASN1Integer(y));
+
+        // 长度为 new SM3Digest().getDigestSize()
+        final int c3Len = 32;
+        byte[] c3 = new byte[c3Len];
+
+        final int c2Len = plainCipher.length - c1Len - c3Len;
+        byte[] c2 = new byte[c2Len];
+
+        if (mode == SM2Engine.Mode.C1C3C2) {
+            System.arraycopy(plainCipher, c1Len, c3, 0, c3Len);
+            System.arraycopy(plainCipher, c1Len + c3Len, c2, 0, c2Len);
+
+            v.add(new DEROctetString(c3));
+            v.add(new DEROctetString(c2));
+        } else {
+            System.arraycopy(plainCipher, c1Len, c2, 0, c2Len);
+            System.arraycopy(plainCipher, c1Len + c2Len, c3, 0, c3Len);
+
+            v.add(new DEROctetString(c2));
+            v.add(new DEROctetString(c3));
+        }
+
         try {
-            sequence = (ASN1Sequence) DERSequence.fromByteArray(asn1C1C2C3);
+            return new DERSequence(v).getEncoded(ASN1Encoding.DER);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        BigInteger x = ASN1Integer.getInstance(sequence.getObjectAt(0)).getPositiveValue();
-        BigInteger y = ASN1Integer.getInstance(sequence.getObjectAt(1)).getPositiveValue();
-        byte[] c1 = SM2_X9_EC_PARAMETERS.getCurve().validatePoint(x, y).getEncoded(false);
-        byte[] c3 = ((ASN1OctetString) sequence.getObjectAt(2)).getOctets();
-        byte[] c2 = ((ASN1OctetString) sequence.getObjectAt(3)).getOctets();
-        byte[] c1c2c3 = new byte[c1.length + c2.length + c3.length];
-        System.arraycopy(c1, 0, c1c2c3, 0, c1.length);
-        System.arraycopy(c2, 0, c1c2c3, c1.length, c2.length);
-        System.arraycopy(c3, 0, c1c2c3, c1.length + c2.length, c3.length);
-        return c1c2c3;
     }
 
     /**
-     * 将【DER 编码的 c1||c2||c3 格式的密文】转换为【c1||c2||c3 格式的密文】
+     * 将 ASN1 编码的密文转换为原始密文
      *
-     * @param asn1C1C2C3 DER 编码的 c1||c2||c3 格式的密文
-     * @return c1||c2||c3 格式的密文
+     * @param asn1Cipher ASN1 编码的密文
+     * @return 原始密文
      */
-    @SuppressWarnings("Duplicates")
-    private static byte[] decodeAsn1C1C2C3(byte[] asn1C1C2C3) {
+    public static byte[] decodeAsn1Cipher(byte[] asn1Cipher) {
         ASN1Sequence sequence;
         try {
-            sequence = (ASN1Sequence) DERSequence.fromByteArray(asn1C1C2C3);
+            sequence = (ASN1Sequence) DERSequence.fromByteArray(asn1Cipher);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         BigInteger x = ASN1Integer.getInstance(sequence.getObjectAt(0)).getPositiveValue();
         BigInteger y = ASN1Integer.getInstance(sequence.getObjectAt(1)).getPositiveValue();
         byte[] c1 = SM2_X9_EC_PARAMETERS.getCurve().validatePoint(x, y).getEncoded(false);
-        byte[] c2 = ((ASN1OctetString) sequence.getObjectAt(2)).getOctets();
-        byte[] c3 = ((ASN1OctetString) sequence.getObjectAt(3)).getOctets();
-        byte[] c1c2c3 = new byte[c1.length + c2.length + c3.length];
-        System.arraycopy(c1, 0, c1c2c3, 0, c1.length);
-        System.arraycopy(c2, 0, c1c2c3, c1.length, c2.length);
-        System.arraycopy(c3, 0, c1c2c3, c1.length + c2.length, c3.length);
-        return c1c2c3;
+        byte[] segment1 = ((ASN1OctetString) sequence.getObjectAt(2)).getOctets();
+        byte[] segment2 = ((ASN1OctetString) sequence.getObjectAt(3)).getOctets();
+
+        byte[] plainCipher = new byte[c1.length + segment1.length + segment2.length];
+        System.arraycopy(c1, 0, plainCipher, 0, c1.length);
+        System.arraycopy(segment1, 0, plainCipher, c1.length, segment1.length);
+        System.arraycopy(segment2, 0, plainCipher, c1.length + segment1.length, segment2.length);
+        return plainCipher;
     }
 
     /**

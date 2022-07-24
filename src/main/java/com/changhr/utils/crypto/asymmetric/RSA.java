@@ -1,9 +1,9 @@
 package com.changhr.utils.crypto.asymmetric;
 
 import javax.crypto.Cipher;
+import java.math.BigInteger;
 import java.security.*;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
+import java.security.spec.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,17 +48,37 @@ public abstract class RSA {
      * 签名
      *
      * @param dataBytes       待签名数据
-     * @param privateKeyBytes 私钥
+     * @param privateExponent 私钥指数
+     * @param modulus         模数
      * @return byte[] 数字签名
      */
-    public static byte[] sign(byte[] dataBytes, byte[] privateKeyBytes) {
-        // 转换私钥材料
-        PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
+    public static byte[] sign(byte[] dataBytes, byte[] privateExponent, byte[] modulus) {
+
+        BigInteger modulusBigint = new BigInteger(1, modulus);
+        BigInteger privateExponentBigint = new BigInteger(1, privateExponent);
+        RSAPrivateKeySpec rsaPrivateKeySpec = new RSAPrivateKeySpec(modulusBigint, privateExponentBigint);
         try {
             // 实例化密钥工厂
             KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
             // 获取私钥对象
-            PrivateKey privateKey = keyFactory.generatePrivate(pkcs8EncodedKeySpec);
+            PrivateKey privateKey = keyFactory.generatePrivate(rsaPrivateKeySpec);
+            return sign(dataBytes, privateKey);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 签名
+     *
+     * @param dataBytes  待签名数据
+     * @param privateKey 私钥，{@link PrivateKey}
+     * @return byte[] 数字签名
+     */
+    public static byte[] sign(byte[] dataBytes, PrivateKey privateKey) {
+        try {
+            // 实例化密钥工厂
+            KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
             // 实例化 Signature
             Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
             // 初始化 Signature
@@ -75,19 +95,37 @@ public abstract class RSA {
     /**
      * 验签
      *
-     * @param data   待验签数据
-     * @param pubKey 公钥
-     * @param sign   数字签名
+     * @param data           待验签数据
+     * @param sign           数字签名
+     * @param publicExponent 公钥指数
+     * @param modulus        模数
      * @return boolean 验签通过返回 true，失败返回 false
      */
-    public static boolean verify(byte[] data, byte[] pubKey, byte[] sign) {
-        // 获取公钥
-        X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(pubKey);
+    public static boolean verify(byte[] data, byte[] sign, byte[] publicExponent, byte[] modulus) {
+        BigInteger modulusBigint = new BigInteger(1, modulus);
+        BigInteger publicExponentBigint = new BigInteger(1, publicExponent);
+        RSAPublicKeySpec rsaPublicKeySpec = new RSAPublicKeySpec(modulusBigint, publicExponentBigint);
         try {
             // 实例化密钥工厂
             KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
             // 生成公钥
-            PublicKey publicKey = keyFactory.generatePublic(x509EncodedKeySpec);
+            PublicKey publicKey = keyFactory.generatePublic(rsaPublicKeySpec);
+            return verify(data, sign, publicKey);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 验签
+     *
+     * @param data      待验签数据
+     * @param publicKey 公钥，{@link PublicKey}
+     * @param sign      数字签名
+     * @return boolean 验签通过返回 true，失败返回 false
+     */
+    public static boolean verify(byte[] data, byte[] sign, PublicKey publicKey) {
+        try {
             // 实例化 Signature
             Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
             // 初始化 Signature
@@ -126,18 +164,6 @@ public abstract class RSA {
     }
 
     /**
-     * 公钥加密
-     * 默认使用 RSA/ECB/PKCS1Padding 方式
-     *
-     * @param plainBytes     待加密数据
-     * @param publicKeyBytes 公钥
-     * @return byte[] 加密后的数据
-     */
-    public static byte[] encrypt(byte[] plainBytes, byte[] publicKeyBytes) {
-        return encrypt(plainBytes, publicKeyBytes, ECB_PKCS_1_PADDING);
-    }
-
-    /**
      * 私钥解密
      *
      * @param cipherBytes     待解密数据
@@ -162,97 +188,13 @@ public abstract class RSA {
     }
 
     /**
-     * 私钥解密
-     * 默认使用 RSA/ECB/PKCS1Padding 方式
-     *
-     * @param cipherBytes     待解密数据
-     * @param privateKeyBytes 私钥
-     * @return byte[] 解密数据
-     */
-    public static byte[] decrypt(byte[] cipherBytes, byte[] privateKeyBytes) {
-        return decrypt(cipherBytes, privateKeyBytes, ECB_PKCS_1_PADDING);
-    }
-
-    /**
-     * 私钥加密
-     *
-     * @param data            待加密数据
-     * @param pubKey          私钥
-     * @param cipherAlgorithm 算法/工作模式/填充方式
-     * @return byte[] 加密后的数据
-     */
-    public static byte[] encryptByPrivateKey(byte[] data, byte[] pubKey, final String cipherAlgorithm) {
-        // 获取私钥
-        PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(pubKey);
-        try {
-            KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
-            // 生成私钥
-            PrivateKey privateKey = keyFactory.generatePrivate(pkcs8EncodedKeySpec);
-            // 对数据解密
-            Cipher cipher = Cipher.getInstance(cipherAlgorithm);
-            cipher.init(Cipher.ENCRYPT_MODE, privateKey);
-            return cipher.doFinal(data);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * 私钥加密
-     * 默认使用 RSA/ECB/PKCS1Padding 方式
-     *
-     * @param data   待加密数据
-     * @param priKey 私钥
-     * @return byte[] 加密后的数据
-     */
-    public static byte[] encryptByPrivateKey(byte[] data, byte[] priKey) {
-        return encryptByPrivateKey(data, priKey, ECB_PKCS_1_PADDING);
-    }
-
-    /**
-     * 公钥解密
-     *
-     * @param data   待解密数据
-     * @param pubKey 公钥
-     * @return byte[] 解密后的数据
-     */
-    public static byte[] decryptByPublicKey(byte[] data, byte[] pubKey, final String cipherAlgorithm) {
-        // 获取公钥
-        X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(pubKey);
-        try {
-            KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
-            // 生成公钥
-            PublicKey publicKey = keyFactory.generatePublic(x509EncodedKeySpec);
-            // 对数据解密
-            Cipher cipher = Cipher.getInstance(cipherAlgorithm);
-            cipher.init(Cipher.DECRYPT_MODE, publicKey);
-            return cipher.doFinal(data);
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * 公钥解密
-     * 默认使用 RSA/ECB/PKCS1Padding 方式
-     *
-     * @param data   待解密数据
-     * @param pubKey 公钥
-     * @return byte[] 解密后的数据
-     */
-    public static byte[] decryptByPublicKey(byte[] data, byte[] pubKey) {
-        return decryptByPublicKey(data, pubKey, ECB_PKCS_1_PADDING);
-    }
-
-    /**
      * 获取私钥
      *
      * @param keyMap 密钥 Map
      * @return byte[] 私钥
      */
-    public static byte[] getPrivateKey(Map<String, Object> keyMap) {
-        Key key = (Key) keyMap.get(PRIVATE_KEY);
+    public static byte[] getPrivateKey(Map<String, Key> keyMap) {
+        PrivateKey key = (PrivateKey) keyMap.get(PRIVATE_KEY);
         return key.getEncoded();
     }
 
@@ -262,8 +204,8 @@ public abstract class RSA {
      * @param keyMap 密钥 Map
      * @return byte[] 公钥
      */
-    public static byte[] getPublicKey(Map<String, Object> keyMap) {
-        Key key = (Key) keyMap.get(PUBLIC_KEY);
+    public static byte[] getPublicKey(Map<String, Key> keyMap) {
+        PublicKey key = (PublicKey) keyMap.get(PUBLIC_KEY);
         return key.getEncoded();
     }
 
