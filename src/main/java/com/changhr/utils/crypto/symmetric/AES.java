@@ -3,7 +3,6 @@ package com.changhr.utils.crypto.symmetric;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 
 /**
@@ -40,11 +39,47 @@ public abstract class AES {
      * 转换密钥
      *
      * @param key 二进制密钥
-     * @return Key 密钥
+     * @return SecretKey 密钥，{@link SecretKey}
      */
-    private static Key toKey(byte[] key) {
+    public static SecretKey toKey(byte[] key) {
         // 实例化 AES 密钥材料
         return new SecretKeySpec(key, KEY_ALGORITHM);
+    }
+
+    /**
+     * 生成密钥
+     * 不指定密钥长度，默认为 256 位
+     *
+     * @return byte[] 二进制密钥
+     */
+    public static byte[] initKey() {
+        return initKey(KEY_SIZE);
+    }
+
+    /**
+     * 生成密钥
+     * 128、192、256 可选
+     *
+     * @param keySize 密钥长度
+     * @return byte[] 二进制密钥
+     */
+    public static byte[] initKey(int keySize) {
+        // AES 要求密钥长度为 128 位、192 位或 256 位
+        if (keySize != 128 && keySize != 192 && keySize != 256) {
+            throw new RuntimeException("error keySize: " + keySize);
+        }
+        // 实例化
+        KeyGenerator keyGenerator;
+        try {
+            keyGenerator = KeyGenerator.getInstance(KEY_ALGORITHM);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("no such algorithm exception: " + KEY_ALGORITHM, e);
+        }
+        keyGenerator.init(keySize);
+        // 生成秘密密钥
+        SecretKey secretKey = keyGenerator.generateKey();
+        // 获得密钥的二进制编码形式
+        return secretKey.getEncoded();
     }
 
     /**
@@ -85,42 +120,6 @@ public abstract class AES {
         }
 
         return BCCipher.decrypt(cipherBytes, keyBytes, ivBytes, cipherAlgorithm);
-    }
-
-    /**
-     * 生成密钥
-     * 不指定密钥长度，默认为 256 位
-     *
-     * @return byte[] 二进制密钥
-     */
-    public static byte[] initKey() {
-        return initKey(KEY_SIZE);
-    }
-
-    /**
-     * 生成密钥
-     * 128、192、256 可选
-     *
-     * @param keySize 密钥长度
-     * @return byte[] 二进制密钥
-     */
-    public static byte[] initKey(int keySize) {
-        // AES 要求密钥长度为 128 位、192 位或 256 位
-        if (keySize != 128 && keySize != 192 && keySize != 256) {
-            throw new RuntimeException("error keySize: " + keySize);
-        }
-        // 实例化
-        KeyGenerator keyGenerator;
-        try {
-            keyGenerator = KeyGenerator.getInstance(KEY_ALGORITHM);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("no such algorithm exception: " + KEY_ALGORITHM, e);
-        }
-        keyGenerator.init(keySize);
-        // 生成秘密密钥
-        SecretKey secretKey = keyGenerator.generateKey();
-        // 获得密钥的二进制编码形式
-        return secretKey.getEncoded();
     }
 
 }

@@ -4,6 +4,7 @@ import org.bouncycastle.crypto.CipherKeyGenerator;
 import org.bouncycastle.crypto.CryptoServicesRegistrar;
 import org.bouncycastle.crypto.KeyGenerationParameters;
 
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
@@ -40,6 +41,17 @@ public abstract class SM4 {
 
     public static final String CTR_NO_PADDING = "SM4/CTR/NoPadding";
     public static final String GCM_NO_PADDING = "SM4/GCM/NoPadding";
+
+    /**
+     * 转换密钥
+     *
+     * @param key 二进制密钥
+     * @return SecretKey 密钥，{@link SecretKey}
+     */
+    public static SecretKey toKey(byte[] key) {
+        // 实例化 SM4 密钥材料
+        return new SecretKeySpec(key, KEY_ALGORITHM);
+    }
 
     /**
      * 生成 SM4 对称密钥

@@ -17,6 +17,19 @@ import org.bouncycastle.crypto.params.ParametersWithIV;
  */
 public class BCCipher {
 
+    public static final String ALGORITHM_SM4 = "SM4";
+    public static final String ALGORITHM_AES = "AES";
+
+    public static final String MODE_ECB = "ECB";
+    public static final String MODE_CBC = "CBC";
+    public static final String MODE_CFB = "CFB";
+    public static final String MODE_OFB = "OFB";
+    public static final String MODE_CTR = "CTR";
+    public static final String MODE_GCM = "GCM";
+
+    public static final String PADDING_NO = "NoPadding";
+    public static final String PADDING_PKCS7 = "PKCS7Padding";
+
     /**
      * 获取 BlockCipher
      *
@@ -27,38 +40,38 @@ public class BCCipher {
 
         String[] transform = cipherAlgorithm.split("/");
         if (transform.length < 3) {
-            throw new RuntimeException("unsupported CipherAlgorithm");
+            throw new RuntimeException("unsupported CipherAlgorithm format: " + cipherAlgorithm);
         }
 
         BlockCipher blockCipher;
-        if ("AES".equalsIgnoreCase(transform[0])) {
+        if (ALGORITHM_AES.equalsIgnoreCase(transform[0])) {
             blockCipher = new AESEngine();
-        } else if ("SM4".equalsIgnoreCase(transform[0])) {
+        } else if (ALGORITHM_SM4.equalsIgnoreCase(transform[0])) {
             blockCipher = new SM4Engine();
         } else {
             throw new RuntimeException("unsupported cipher algorithm: " + transform[0]);
         }
 
-        if ("CBC".equalsIgnoreCase(transform[1])) {
+        if (MODE_CBC.equalsIgnoreCase(transform[1])) {
             blockCipher = new CBCBlockCipher(blockCipher);
-        } else if ("CFB".equalsIgnoreCase(transform[1])) {
+        } else if (MODE_CFB.equalsIgnoreCase(transform[1])) {
             blockCipher = new CFBBlockCipher(blockCipher, blockCipher.getBlockSize());
-        } else if ("OFB".equalsIgnoreCase(transform[1])) {
+        } else if (MODE_OFB.equalsIgnoreCase(transform[1])) {
             blockCipher = new OFBBlockCipher(blockCipher, blockCipher.getBlockSize());
-        } else if ("CTR".equalsIgnoreCase(transform[1])) {
+        } else if (MODE_CTR.equalsIgnoreCase(transform[1])) {
             blockCipher = new SICBlockCipher(blockCipher);
-        } else if ("ECB".equalsIgnoreCase(transform[1])) {
+        } else if (MODE_ECB.equalsIgnoreCase(transform[1])) {
             // 默认为 ECB 模式，不需要做处理
         } else {
-            throw new RuntimeException("unsupported cipher mode" + transform[1]);
+            throw new RuntimeException("unsupported cipher mode: " + transform[1]);
         }
 
-        if ("NoPadding".equalsIgnoreCase(transform[2])) {
+        if (PADDING_NO.equalsIgnoreCase(transform[2])) {
             return new BufferedBlockCipher(blockCipher);
-        } else if ("PKCS7Padding".equalsIgnoreCase(transform[2])) {
+        } else if (PADDING_PKCS7.equalsIgnoreCase(transform[2])) {
             return new PaddedBufferedBlockCipher(blockCipher);
         } else {
-            throw new RuntimeException("unsupported cipher padding" + transform[2]);
+            throw new RuntimeException("unsupported cipher padding: " + transform[2]);
         }
     }
 
@@ -73,14 +86,14 @@ public class BCCipher {
         // 解析 JCE 算法格式的字符串
         String[] transform = cipherAlgorithm.split("/");
         if (transform.length < 3) {
-            throw new RuntimeException("unsupported CipherAlgorithm");
+            throw new RuntimeException("unsupported CipherAlgorithm format: " + cipherAlgorithm);
         }
 
         // 获取 BlockCipher
         BlockCipher blockCipher;
-        if ("AES".equalsIgnoreCase(transform[0])) {
+        if (ALGORITHM_AES.equalsIgnoreCase(transform[0])) {
             blockCipher = new AESEngine();
-        } else if ("SM4".equalsIgnoreCase(transform[0])) {
+        } else if (ALGORITHM_SM4.equalsIgnoreCase(transform[0])) {
             blockCipher = new SM4Engine();
         } else {
             throw new RuntimeException("unsupported cipher algorithm: " + transform[0]);
@@ -227,7 +240,7 @@ public class BCCipher {
             return out;
 
         } catch (Exception e) {
-            throw new RuntimeException("AES-GCM decrypt error", e);
+            throw new RuntimeException(cipherAlgorithm + " decrypt error", e);
         }
     }
 
@@ -255,7 +268,7 @@ public class BCCipher {
             return out;
 
         } catch (Exception e) {
-            throw new RuntimeException("AES-GCM decrypt error", e);
+            throw new RuntimeException(cipherAlgorithm + " decrypt error", e);
         }
     }
 }
