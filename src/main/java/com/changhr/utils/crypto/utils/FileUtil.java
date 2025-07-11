@@ -6,7 +6,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
@@ -15,6 +17,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FileUtil {
 
@@ -25,9 +28,9 @@ public class FileUtil {
 
 
     /**
-     * 获取当前线程的{@link ClassLoader}
+     * 获取当前线程的 {@link ClassLoader}
      *
-     * @return 当前线程的class loader
+     * @return 当前线程的 class loader
      * @see Thread#getContextClassLoader()
      */
     public static ClassLoader getContextClassLoader() {
@@ -41,9 +44,9 @@ public class FileUtil {
     }
 
     /**
-     * 获取系统{@link ClassLoader}
+     * 获取系统 {@link ClassLoader}
      *
-     * @return 系统{@link ClassLoader}
+     * @return 系统 {@link ClassLoader}
      * @see ClassLoader#getSystemClassLoader()
      */
     public static ClassLoader getSystemClassLoader() {
@@ -57,13 +60,13 @@ public class FileUtil {
     }
 
     /**
-     * 获取{@link ClassLoader}<br>
+     * 获取 {@link ClassLoader}<br>
      * 获取顺序如下：<br>
      *
      * <pre>
-     * 1、获取当前线程的ContextClassLoader
-     * 2、获取当前类对应的ClassLoader
-     * 3、获取系统ClassLoader（{@link ClassLoader#getSystemClassLoader()}）
+     * 1、获取当前线程的 ContextClassLoader
+     * 2、获取当前类对应的 ClassLoader
+     * 3、获取系统 ClassLoader（{@link ClassLoader#getSystemClassLoader()}）
      * </pre>
      *
      * @return 类加载器
@@ -103,8 +106,8 @@ public class FileUtil {
     }
 
     /**
-     * 是否空白符<br>
-     * 空白符包括空格、制表符、全角空格和不间断空格<br>
+     * 是否空白符 <br>
+     * 空白符包括空格、制表符、全角空格和不间断空格 <br>
      *
      * @param c 字符
      * @return 是否空白符
@@ -114,8 +117,8 @@ public class FileUtil {
     }
 
     /**
-     * 是否空白符<br>
-     * 空白符包括空格、制表符、全角空格和不间断空格<br>
+     * 是否空白符 <br>
+     * 空白符包括空格、制表符、全角空格和不间断空格 <br>
      *
      * @param c 字符
      * @return 是否空白符
@@ -135,12 +138,12 @@ public class FileUtil {
     }
 
     /**
-     * 按照断言，除去字符串头尾部的断言为真的字符，如果字符串是{@code null}，依然返回{@code null}。
+     * 按照断言，除去字符串头尾部的断言为真的字符，如果字符串是 {@code null}，依然返回 {@code null}。
      *
      * @param str       要处理的字符串
-     * @param mode      {@code -1}表示trimStart，{@code 0}表示trim全部， {@code 1}表示trimEnd
-     * @param predicate 断言是否过掉字符，返回{@code true}表述过滤掉，{@code false}表示不过滤
-     * @return 除去指定字符后的的字符串，如果原字串为{@code null}，则返回{@code null}
+     * @param mode      {@code -1} 表示 trimStart，{@code 0} 表示 trim 全部， {@code 1} 表示 trimEnd
+     * @param predicate 断言是否过掉字符，返回 {@code true} 表述过滤掉，{@code false} 表示不过滤
+     * @return 除去指定字符后的的字符串，如果原字串为 {@code null}，则返回 {@code null}
      */
     public static String trim(CharSequence str, int mode, Predicate<Character> predicate) {
         String result;
@@ -203,16 +206,16 @@ public class FileUtil {
     }
 
     /**
-     * 给定路径已经是绝对路径<br>
-     * 此方法并没有针对路径做标准化，建议先标准化路径后判断<br>
+     * 给定路径已经是绝对路径 <br>
+     * 此方法并没有针对路径做标准化，建议先标准化路径后判断 <br>
      * 绝对路径判断条件是：
      * <ul>
-     *     <li>以/开头的路径</li>
-     *     <li>满足类似于 c:/xxxxx，其中祖母随意，不区分大小写</li>
-     *     <li>满足类似于 d:\xxxxx，其中祖母随意，不区分大小写</li>
+     *     <li> 以 / 开头的路径 </li>
+     *     <li> 满足类似于 c:/xxxxx，其中祖母随意，不区分大小写 </li>
+     *     <li> 满足类似于 d:\xxxxx，其中祖母随意，不区分大小写 </li>
      * </ul>
      *
-     * @param path 需要检查的Path
+     * @param path 需要检查的 Path
      * @return 是否已经是绝对路径
      */
     public static boolean isAbsolutePath(String path) {
@@ -225,49 +228,49 @@ public class FileUtil {
     }
 
     /**
-     * 判断是否为目录，如果path为null，则返回false
+     * 判断是否为目录，如果 path 为 null，则返回 false
      *
      * @param path 文件路径
-     * @return 如果为目录true
+     * @return 如果为目录 true
      */
     public static boolean isDirectory(String path) {
         return (null != path) && file(path).isDirectory();
     }
 
     /**
-     * 判断是否为目录，如果file为null，则返回false
+     * 判断是否为目录，如果 file 为 null，则返回 false
      *
      * @param file 文件
-     * @return 如果为目录true
+     * @return 如果为目录 true
      */
     public static boolean isDirectory(File file) {
         return (null != file) && file.isDirectory();
     }
 
     /**
-     * 判断是否为文件，如果path为null，则返回false
+     * 判断是否为文件，如果 path 为 null，则返回 false
      *
      * @param path 文件路径
-     * @return 如果为文件true
+     * @return 如果为文件 true
      */
     public static boolean isFile(String path) {
         return (null != path) && file(path).isFile();
     }
 
     /**
-     * 判断是否为文件，如果file为null，则返回false
+     * 判断是否为文件，如果 file 为 null，则返回 false
      *
      * @param file 文件
-     * @return 如果为文件true
+     * @return 如果为文件 true
      */
     public static boolean isFile(File file) {
         return (null != file) && file.isFile();
     }
 
     /**
-     * 检查父完整路径是否为自路径的前半部分，如果不是说明不是子路径，可能存在slip注入。
+     * 检查父完整路径是否为自路径的前半部分，如果不是说明不是子路径，可能存在 slip 注入。
      * <p>
-     * 见http://blog.nsfocus.net/zip-slip-2/
+     * 见 http://blog.nsfocus.net/zip-slip-2/
      *
      * @param parentFile 父文件或目录
      * @param file       子文件或目录
@@ -311,10 +314,10 @@ public class FileUtil {
     }
 
     /**
-     * 将Path路径转换为标准的绝对路径
+     * 将 Path 路径转换为标准的绝对路径
      *
-     * @param path 文件或目录Path
-     * @return 转换后的Path
+     * @param path 文件或目录 Path
+     * @return 转换后的 Path
      */
     public static Path toAbsNormal(Path path) {
         if (null == path) {
@@ -324,9 +327,9 @@ public class FileUtil {
     }
 
     /**
-     * 创建File对象，自动识别相对或绝对路径，相对路径将自动从ClassPath下寻找
+     * 创建 File 对象，自动识别相对或绝对路径，相对路径将自动从 ClassPath 下寻找
      *
-     * @param path 相对ClassPath的目录或者绝对路径目录
+     * @param path 相对 ClassPath 的目录或者绝对路径目录
      * @return File
      */
     public static File file(String path) {
@@ -337,8 +340,8 @@ public class FileUtil {
     }
 
     /**
-     * 创建File对象<br>
-     * 此方法会检查slip漏洞，漏洞说明见http://blog.nsfocus.net/zip-slip-2/
+     * 创建 File 对象 <br>
+     * 此方法会检查 slip 漏洞，漏洞说明见 http://blog.nsfocus.net/zip-slip-2/
      *
      * @param parent 父目录
      * @param path   文件路径
@@ -349,9 +352,9 @@ public class FileUtil {
     }
 
     /**
-     * 创建File对象<br>
-     * 根据的路径构建文件，在Win下直接构建，在Linux下拆分路径单独构建
-     * 此方法会检查slip漏洞，漏洞说明见http://blog.nsfocus.net/zip-slip-2/
+     * 创建 File 对象 <br>
+     * 根据的路径构建文件，在 Win 下直接构建，在 Linux 下拆分路径单独构建
+     * 此方法会检查 slip 漏洞，漏洞说明见 http://blog.nsfocus.net/zip-slip-2/
      *
      * @param parent 父文件对象
      * @param path   文件路径
@@ -379,10 +382,10 @@ public class FileUtil {
                 && fileName.lastIndexOf('/', fileName.length() - 2) > 0) {
             // 在 Linux 下多层目录创建存在问题，/ 会被当成文件名的一部分，此处做处理
             // 使用 / 拆分路径（zip 中无 \），级联创建父目录
-            final List<String> pathParts= Arrays.stream(fileName.split("/")).collect(Collectors.toList());
-            final int lastPartIndex = pathParts.size() - 1;//目录个数
+            final List<String> pathParts = Arrays.stream(fileName.split("/")).collect(Collectors.toList());
+            final int lastPartIndex = pathParts.size() - 1;// 目录个数
             for (int i = 0; i < lastPartIndex; i++) {
-                //由于路径拆分，slip 不检查，在最后一步检查
+                // 由于路径拆分，slip 不检查，在最后一步检查
                 outFile = new File(outFile, pathParts.get(i));
             }
             // noinspection ResultOfMethodCallIgnored
@@ -403,7 +406,7 @@ public class FileUtil {
     }
 
     /**
-     * 通过多层目录参数创建文件<br>
+     * 通过多层目录参数创建文件 <br>
      * 此方法会检查 slip 漏洞，漏洞说明见 {@code http://blog.nsfocus.net/zip-slip-2/}
      *
      * @param directory 父目录
@@ -453,9 +456,9 @@ public class FileUtil {
     }
 
     /**
-     * 创建File对象
+     * 创建 File 对象
      *
-     * @param uri 文件URI
+     * @param uri 文件 URI
      * @return File
      */
     public static File file(URI uri) {
@@ -466,20 +469,20 @@ public class FileUtil {
     }
 
     /**
-     * 判断文件是否存在，如果path为null，则返回false
+     * 判断文件是否存在，如果 path 为 null，则返回 false
      *
      * @param path 文件路径
-     * @return 如果存在返回true
+     * @return 如果存在返回 true
      */
     public static boolean exist(String path) {
         return (null != path) && file(path).exists();
     }
 
     /**
-     * 判断文件是否存在，如果file为null，则返回false
+     * 判断文件是否存在，如果 file 为 null，则返回 false
      *
      * @param file 文件
-     * @return 如果存在返回true
+     * @return 如果存在返回 true
      */
     public static boolean exist(File file) {
         return (null != file) && file.exists();
@@ -491,7 +494,7 @@ public class FileUtil {
      *
      * @param directory 文件夹路径
      * @param regexp    文件夹中所包含文件名的正则表达式
-     * @return 如果存在匹配文件返回true
+     * @return 如果存在匹配文件返回 true
      */
     public static boolean exist(String directory, String regexp) {
         final File file = new File(directory);
@@ -514,11 +517,11 @@ public class FileUtil {
     }
 
     /**
-     * 创建文件及其父目录，如果这个文件存在，直接返回这个文件<br>
-     * 此方法不对File对象类型做判断，如果File不存在，无法判断其类型
+     * 创建文件及其父目录，如果这个文件存在，直接返回这个文件 <br>
+     * 此方法不对 File 对象类型做判断，如果 File 不存在，无法判断其类型
      *
-     * @param path 相对ClassPath的目录或者绝对路径目录，使用POSIX风格
-     * @return 文件，若路径为null，返回null
+     * @param path 相对 ClassPath 的目录或者绝对路径目录，使用 POSIX 风格
+     * @return 文件，若路径为 null，返回 null
      */
     public static File touch(String path) throws IOException {
         if (path == null) {
@@ -528,11 +531,11 @@ public class FileUtil {
     }
 
     /**
-     * 创建文件及其父目录，如果这个文件存在，直接返回这个文件<br>
-     * 此方法不对File对象类型做判断，如果File不存在，无法判断其类型
+     * 创建文件及其父目录，如果这个文件存在，直接返回这个文件 <br>
+     * 此方法不对 File 对象类型做判断，如果 File 不存在，无法判断其类型
      *
      * @param file 文件对象
-     * @return 文件，若路径为null，返回null
+     * @return 文件，若路径为 null，返回 null
      */
     public static File touch(File file) throws IOException {
         if (null == file) {
@@ -541,7 +544,7 @@ public class FileUtil {
         if (false == file.exists()) {
             mkParentDirs(file);
             try {
-                //noinspection ResultOfMethodCallIgnored
+                // noinspection ResultOfMethodCallIgnored
                 file.createNewFile();
             } catch (Exception e) {
                 throw new IOException(e);
@@ -551,8 +554,8 @@ public class FileUtil {
     }
 
     /**
-     * 创建文件及其父目录，如果这个文件存在，直接返回这个文件<br>
-     * 此方法不对File对象类型做判断，如果File不存在，无法判断其类型
+     * 创建文件及其父目录，如果这个文件存在，直接返回这个文件 <br>
+     * 此方法不对 File 对象类型做判断，如果 File 不存在，无法判断其类型
      *
      * @param parent 父文件对象
      * @param path   文件路径
@@ -563,8 +566,8 @@ public class FileUtil {
     }
 
     /**
-     * 创建文件及其父目录，如果这个文件存在，直接返回这个文件<br>
-     * 此方法不对File对象类型做判断，如果File不存在，无法判断其类型
+     * 创建文件及其父目录，如果这个文件存在，直接返回这个文件 <br>
+     * 此方法不对 File 对象类型做判断，如果 File 不存在，无法判断其类型
      *
      * @param parent 父文件对象
      * @param path   文件路径
@@ -588,8 +591,8 @@ public class FileUtil {
     }
 
     /**
-     * 创建文件夹，会递归自动创建其不存在的父文件夹，如果存在直接返回此文件夹<br>
-     * 此方法不对File对象类型做判断，如果File不存在，无法判断其类型<br>
+     * 创建文件夹，会递归自动创建其不存在的父文件夹，如果存在直接返回此文件夹 <br>
+     * 此方法不对 File 对象类型做判断，如果 File 不存在，无法判断其类型 <br>
      *
      * @param dir 目录
      * @return 创建的目录
@@ -608,7 +611,7 @@ public class FileUtil {
      * 安全地级联创建目录 (确保并发环境下能创建成功)
      *
      * <pre>
-     *     并发环境下，假设 test 目录不存在，如果线程A mkdirs "test/A" 目录，线程B mkdirs "test/B"目录，
+     *     并发环境下，假设 test 目录不存在，如果线程 A mkdirs "test/A" 目录，线程 B mkdirs "test/B"目录，
      *     其中一个线程可能会失败，进而导致以下代码抛出 FileNotFoundException 异常
      *
      *     file.getParentFile().mkdirs(); // 父目录正在被另一个线程创建中，返回 false
@@ -629,7 +632,7 @@ public class FileUtil {
         }
         for (int i = 1; i <= tryCount; i++) { // 高并发场景下，可以看到 i 处于 1 ~ 3 之间
             // 如果文件已存在，也会返回 false，所以该值不能作为是否能创建的依据，因此不对其进行处理
-            //noinspection ResultOfMethodCallIgnored
+            // noinspection ResultOfMethodCallIgnored
             dir.mkdirs();
             if (dir.exists()) {
                 return true;
@@ -658,7 +661,7 @@ public class FileUtil {
      *
      * @param file  目录或文件
      * @param level 层级
-     * @return 路径File，如果不存在返回null
+     * @return 路径 File，如果不存在返回 null
      * @since 4.1.2
      */
     public static File getParent(File file, int level) {
@@ -681,7 +684,7 @@ public class FileUtil {
     /**
      * 创建父文件夹，如果存在直接返回此文件夹
      *
-     * @param path 文件夹路径，使用POSIX格式，无论哪个平台
+     * @param path 文件夹路径，使用 POSIX 格式，无论哪个平台
      * @return 创建的目录
      */
     public static File mkParentDirs(String path) {
@@ -692,7 +695,7 @@ public class FileUtil {
     }
 
     /**
-     * 将String写入文件，覆盖模式，字符集为UTF-8
+     * 将 String 写入文件，覆盖模式，字符集为 UTF-8
      *
      * @param content 写入的内容
      * @param path    文件路径
@@ -714,7 +717,7 @@ public class FileUtil {
     }
 
     /**
-     * 将String写入文件，覆盖模式
+     * 将 String 写入文件，覆盖模式
      *
      * @param content 写入的内容
      * @param path    文件路径
@@ -753,5 +756,141 @@ public class FileUtil {
             }
         }
         return file;
+    }
+
+
+    /**
+     * 读取文件所有内容为 UTF-8 字符串 (字符串路径)
+     *
+     * @param pathStr 文件路径字符串
+     * @return 文件内容
+     * @throws IOException 如果读取失败
+     */
+    public static String readUtf8String(String pathStr) throws IOException {
+        return readUtf8String(Paths.get(pathStr));
+    }
+
+    /**
+     * 读取文件所有内容为 UTF-8 字符串
+     *
+     * @param path 文件路径
+     * @return 文件内容
+     * @throws IOException 如果读取失败
+     */
+    public static String readUtf8String(Path path) throws IOException {
+        return readString(path, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * 读取文件所有内容为字符串 (基于 NIO，Java 8 兼容)
+     *
+     * @param path    文件路径
+     * @param charset 字符集
+     * @return 文件内容
+     * @throws IOException 如果读取失败
+     */
+    public static String readString(Path path, Charset charset) throws IOException {
+        Objects.requireNonNull(path, "文件路径不能为 null");
+        Charset actualCharset = charset != null ? charset : StandardCharsets.UTF_8;
+
+        // Java 8 兼容的实现方式
+        byte[] bytes = Files.readAllBytes(path);
+        return new String(bytes, actualCharset);
+    }
+
+    /**
+     * 读取文件所有行 (UTF-8)
+     *
+     * @param path 文件路径
+     * @return 行的 Stream
+     * @throws IOException 如果读取失败
+     */
+    public static Stream<String> linesUtf8(Path path) throws IOException {
+        return lines(path, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * 读取文件所有行
+     *
+     * @param path    文件路径
+     * @param charset 字符集
+     * @return 行的 Stream
+     * @throws IOException 如果读取失败
+     */
+    public static Stream<String> lines(Path path, Charset charset) throws IOException {
+        Objects.requireNonNull(path, "文件路径不能为 null");
+        Charset actualCharset = charset != null ? charset : StandardCharsets.UTF_8;
+        return Files.lines(path, actualCharset);
+    }
+
+    /**
+     * 写入行列表到文件
+     *
+     * @param path    文件路径
+     * @param lines   行列表
+     * @param charset 字符集
+     * @throws IOException 如果写入失败
+     */
+    public static void writeLines(Path path, Iterable<? extends CharSequence> lines, Charset charset) throws IOException {
+        Objects.requireNonNull(path, "文件路径不能为 null");
+        Objects.requireNonNull(lines, "行列表不能为 null");
+        Charset actualCharset = charset != null ? charset : StandardCharsets.UTF_8;
+        Files.write(path, lines, actualCharset);
+    }
+
+    /**
+     * 写入行列表到文件 (UTF-8)
+     *
+     * @param path  文件路径
+     * @param lines 行列表
+     * @throws IOException 如果写入失败
+     */
+    public static void writeUtf8Lines(Path path, Iterable<? extends CharSequence> lines) throws IOException {
+        writeLines(path, lines, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * 复制文件
+     *
+     * @param source 源文件路径
+     * @param target 目标文件路径
+     * @throws IOException 如果复制失败
+     */
+    public static void copyFile(Path source, Path target) throws IOException {
+        Objects.requireNonNull(source, "源文件路径不能为null");
+        Objects.requireNonNull(target, "目标文件路径不能为null");
+        Files.copy(source, target);
+    }
+
+    /**
+     * 检查文件是否存在且可读
+     *
+     * @param path 文件路径
+     * @return 是否存在且可读
+     */
+    public static boolean isReadable(Path path) {
+        return path != null && Files.exists(path) && Files.isReadable(path);
+    }
+
+    /**
+     * 检查文件是否存在且可写
+     *
+     * @param path 文件路径
+     * @return 是否存在且可写
+     */
+    public static boolean isWritable(Path path) {
+        return path != null && Files.exists(path) && Files.isWritable(path);
+    }
+
+    /**
+     * 获取文件大小
+     *
+     * @param path 文件路径
+     * @return 文件大小（字节）
+     * @throws IOException 如果获取失败
+     */
+    public static long size(Path path) throws IOException {
+        Objects.requireNonNull(path, "文件路径不能为null");
+        return Files.size(path);
     }
 }

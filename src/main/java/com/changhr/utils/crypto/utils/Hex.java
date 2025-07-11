@@ -7,6 +7,9 @@ package com.changhr.utils.crypto.utils;
  */
 public class Hex {
 
+    private Hex() {
+    }
+
     /**
      * Hex 编码
      *
